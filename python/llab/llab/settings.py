@@ -44,6 +44,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'project',
+    'accounts',
     'bootstrap3',
     'user_streams',
     'user_streams.backends.user_streams_single_table_backend'
