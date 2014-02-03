@@ -45,6 +45,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'project',
     'bootstrap3',
+    'user_streams',
+    'user_streams.backends.user_streams_single_table_backend'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,6 +59,11 @@ MIDDLEWARE_CLASSES = (
 )
 
 ROOT_URLCONF = 'llab.urls'
+
+USER_STREAMS_BACKEND = ('user_streams.'
+                        'backends.'
+                        'user_streams_single_table_backend.'
+                        'SingleTableDatabaseBackend')
 
 WSGI_APPLICATION = 'llab.wsgi.application'
 

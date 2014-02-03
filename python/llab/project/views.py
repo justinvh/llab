@@ -1,6 +1,19 @@
+import user_streams
+
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ProjectForm
+
 from utils.request import post_or_none
+
+from .forms import ProjectForm
+from .models import Project
+
+
+@login_required
+def project_index(request):
+    newsfeed = user_streams.get_stream_items(request.user)
+    context = {'newsfeed': newsfeed}
+    return render(request, 'project/index.html', context)
 
 
 def project_new(request, owner=None, project=None):

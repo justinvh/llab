@@ -1,0 +1,89 @@
+{% load bootstrap3 %}
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    {% bootstrap_css %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" media="all" href="{% static "project/css/base.css" %}">
+    <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
+    {% bootstrap_javascript %}
+  </head>
+  <body>
+    <nav class="navbar navbar-default" role="navigation">
+
+      <div class="container-fluid">
+        <div class="container-llab">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+              llab
+            </a>
+          </div>
+
+          <!-- Collect the nav links, forms, and other content for toggling -->
+          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+              <li class="border-left-right">
+                <a href="#">
+                  <span class="glyphicon glyphicon-record"></span>
+                </a>
+              </li>
+
+              <form class="navbar-form navbar-left" role="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" placeholder="Search">
+                </div>
+              </form>
+
+              <li class="border-left">
+                <a href="#">Explore</a>
+              </li>
+              <li><a href="#">Paste</a></li>
+              <li><a href="#">Help</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li>
+                <a href="#">{{ request.user.username }}</a>
+              </li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <span class="glyphicon glyphicon-plus-sign" data-toggle="tooltip" data-placement="bottom" title="Create new...">
+                </a>
+                <ul class="dropdown-menu">
+                  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">
+                      <span class="glyphicon glyphicon-book"></span>
+                      New Repository</a>
+                  </li>
+                  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">
+                      <span class="glyphicon glyphicon-globe"></span>
+                      New Organization</a>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">
+                  <span class="glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="Account settings">
+                </a>
+              </li>
+              <li>
+                <a href="{% url "django.contrib.auth.views.logout" %}">
+                  <span class="glyphicon glyphicon-log-out" data-toggle="tooltip" data-placement="bottom" title="Sign out"></span>
+                </a>
+              </li>
+            </ul>
+          </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-llab -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <div class="container container-llab">
+      {% block "project_content" %}
+      {% endblock %}
+    </div>
+  </body>
+  <script>
+    $('[data-toggle=tooltip]').tooltip();
+  </script>
+  {% bootstrap_messages %}
+</html>

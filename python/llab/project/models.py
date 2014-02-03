@@ -1,8 +1,10 @@
 import os
+import user_streams
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 
 from llab import settings
 from utils.enumeration import make_bitwise_enumeration, BitwiseSet
@@ -24,6 +26,7 @@ class Project(models.Model):
     description = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    starred_by = models.ManyToManyField(User)
 
     @property
     def git(self):
@@ -36,13 +39,38 @@ class Project(models.Model):
     def git(self, value):
         self._git = value
 
+    def star(self, user):
+        template = 'project/activity-feed/star.html'
+        context = {'user': user, 'project': self}
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(user, content)
+        self.starred_by.add(user)
+        return content
+
+    def unstar(self, user):
+        self.starred_by.remove(user)
+
+    def branch_add(self, branch_name):
+        template = 'project/activity-feed/branch-add.html'
+        context = {'project': self, 'branch': branch_name}
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(self.starred_by.all(), content)
+        return content
+
+    def branch_remove(self, branch_name):
+        template = 'project/activity-feed/branch-remove.html'
+        context = {'project': self, 'branch': branch_name}
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(self.starred_by.all(), content)
+        return content
+
     def get_absolute_url(self):
         kwds = {'owner': self.owner.username, 'name': self.name}
         return reverse('view', kwargs=kwds, current_app='project')
 
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH
-        return os.path.join(repo, self.owner.username, self.name)
+        return os.path.join(repo, self.full_name())
 
     @transaction.atomic
     def save(self, *args, **kwargs):
@@ -56,8 +84,11 @@ class Project(models.Model):
         project_path = self.get_absolute_path()
         self.git = Git.clone_or_create(path=project_path, clone=clone)
 
-    def __unicode__(self):
+    def full_name(self):
         return os.path.join(self.owner.username, self.name)
+
+    def __unicode__(self):
+        self.full_name()
 
 
 class Group(models.Model):

@@ -1,3 +1,4 @@
 Django==1.6.1
 django-bootstrap3==2.5.6
+django-user-streams==0.6.0
 dulwich==0.9.4
