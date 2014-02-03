@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.template.defaultfilters import slugify
 
 from llab import settings
 from utils.enumeration import make_bitwise_enumeration, BitwiseSet
@@ -19,7 +20,7 @@ Permission = make_bitwise_enumeration(
 
 
 class Project(models.Model):
-    owner = models.ForeignKey(User, related_name='projects_managed')
+    owner = models.ForeignKey(User, related_name='projects')
     fork = models.ForeignKey('Project', related_name='forks', null=True)
     private = models.BooleanField(default=False)
     name = models.SlugField()
@@ -65,8 +66,8 @@ class Project(models.Model):
         return content
 
     def get_absolute_url(self):
-        kwds = {'owner': self.owner.username, 'name': self.name}
-        return reverse('view', kwargs=kwds, current_app='project')
+        kwds = {'owner': self.owner.username, 'project': self.name}
+        return reverse('project:view', kwargs=kwds)
 
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH

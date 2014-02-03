@@ -33,3 +33,7 @@ def project_new(request, owner=None, project=None):
     # The view will render notes about the fork if applicable
     context = {'form': project_form, 'fork': fork}
     return render(request, 'project/new.html', context)
+
+
+def project_view(request, owner, project):
+    raise NotImplementedError
