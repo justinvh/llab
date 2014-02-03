@@ -1,0 +1,8 @@
+<a class="pull-left" href="#">
+    <img class="media-object" src="http://placehold.it/64x64" alt="{{ user.username }}">
+</a>
+<div class="media-body">
+    <h4 class="media-heading"><a href="#">{{ user.username }}</a> forked <a href="{{ parent.get_absolute_url }}">{{ parent.full_name }}</a> 
+        to <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a></h4>
+    <p><a href="#">{{ user.username }}</a> is now the owner of <a href="#">{{ user.projects.count }}</a> project{{ user.projects.count|pluralize }}. Go collaboration!</p>
+</div>

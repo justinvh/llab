@@ -1,0 +1,7 @@
+<a class="pull-left" href="#">
+    <img class="media-object" src="http://placehold.it/64x64" alt="{{ user.username }}">
+</a>
+<div class="media-body">
+    <h4 class="media-heading"><a href="#">{{ user.username }}</a> starred <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a></h4>
+    <p><a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a> has been starred <a href="#">{{ project.starred_by.count }}</a> time{{ project.starred_by.count|pluralize }}.</p>
+</div>

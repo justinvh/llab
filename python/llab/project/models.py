@@ -40,13 +40,24 @@ class Project(models.Model):
     def git(self, value):
         self._git = value
 
+    @transaction.atomic
     def star(self, user):
         template = 'project/activity-feed/star.html'
         context = {'user': user, 'project': self}
+        self.starred_by.add(user)
         content = render_to_string(template, context)
         user_streams.add_stream_item(user, content)
-        self.starred_by.add(user)
         return content
+
+    @transaction.atomic
+    def fork_to(self, user):
+        parent = Project.objects.get(pk=self.pk)
+        child = Project.objects.get(pk=self.pk)
+        child.pk = None
+        child.fork = parent
+        child.owner = user
+        child.save()
+        return child
 
     def unstar(self, user):
         self.starred_by.remove(user)
@@ -75,21 +86,34 @@ class Project(models.Model):
 
     @transaction.atomic
     def save(self, *args, **kwargs):
+        self.name = slugify(self.name)
         create_project = True if not self.pk else False
         super(Project, self).save(*args, **kwargs)
         if create_project:
             self.create_project()
+        return self
 
     def create_project(self):
         clone = self.fork.get_absolute_path() if self.fork else None
         project_path = self.get_absolute_path()
         self.git = Git.clone_or_create(path=project_path, clone=clone)
 
+        # Create a new activity stream depending if the project is forked
+        template = 'project/activity-feed/created.html'
+        context = {'user': self.owner, 'project': self}
+        users = [self.owner]
+        if self.fork:
+            template = 'project/activity-feed/forked.html'
+            context['parent'] = self.fork
+            users.append(self.fork.owner)
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(users, content)
+
     def full_name(self):
         return os.path.join(self.owner.username, self.name)
 
     def __unicode__(self):
-        self.full_name()
+        return self.full_name()
 
 
 class Group(models.Model):
