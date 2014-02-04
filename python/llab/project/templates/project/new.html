@@ -1,1 +1,15 @@
 {% extends "project/base.html" %}
+{% load bootstrap3 %}
+
+{% block "project_content" %}
+
+<form class="form" role="form" method='POST'>
+  {% csrf_token %}
+  {% bootstrap_form form %} {% buttons %}
+  <button type="submit" class="btn btn-primary">
+    {% bootstrap_icon "log-in" %} Submit
+  </button>
+  {% endbuttons %}
+</form>
+
+{% endblock %}

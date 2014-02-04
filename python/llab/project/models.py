@@ -23,7 +23,9 @@ class Project(models.Model):
     owner = models.ForeignKey(User, related_name='projects')
     fork = models.ForeignKey('Project', related_name='forks', null=True)
     private = models.BooleanField(default=False)
-    name = models.SlugField()
+    name = models.SlugField(
+        help_text=('Enter a valid name consisting of letters, '
+                   'numbers, underscores or hyphens.'))
     description = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)

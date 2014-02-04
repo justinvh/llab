@@ -11,9 +11,9 @@ class ProjectForm(forms.ModelForm):
     """
     class Meta:
         model = Project
-        include = ('name', 'description', 'private')
+        fields = ('name', 'description', 'private')
 
-    def save(owner, fork=None, commit=True, *args, **kwargs):
+    def save(self, owner, fork=None, commit=True, *args, **kwargs):
         """save -> Project.
 
         Assigns the about-to-be-created a user as an owner.

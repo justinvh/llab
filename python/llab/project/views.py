@@ -26,12 +26,12 @@ def project_new(request, owner=None, project=None):
 
     # Attempt to validate the form and save against the fork specified
     project_form = ProjectForm(post_data)
-    if post_data and project_form.is_clean():
+    if post_data and project_form.is_valid():
         project = project_form.save(owner=request.user, fork=fork)
         return redirect(project)
 
     # The view will render notes about the fork if applicable
-    context = {'form': project_form, 'fork': fork}
+    context = {'form': project_form, 'fork': fork, 'owner': request.user}
     return render(request, 'project/new.html', context)
 
 
