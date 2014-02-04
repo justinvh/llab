@@ -3,13 +3,27 @@
 
 {% block "project_content" %}
 
-<form class="form" role="form" method='POST'>
-  {% csrf_token %}
-  {% bootstrap_form form %} {% buttons %}
-  <button type="submit" class="btn btn-primary">
-    {% bootstrap_icon "log-in" %} Submit
-  </button>
-  {% endbuttons %}
-</form>
+<div class="row">
+  <div class="col-xs-offset-2 col-md-8">
+    <h3>Create a Repository</h3>
+    <p>You're about to jump into the world of collaborative development.
+       Congratulations. Pick a distinctive name and start committing!</p>
+    <form class="form" role="form" method='POST'>
+      {% csrf_token %}
+      {% bootstrap_form form %} {% buttons %}
+      <button type="submit" class="btn btn-primary">
+        {% bootstrap_icon "log-in" %} Create
+      </button>
+      {% endbuttons %}
+    </form>
+  </div>
+</div>
+
+<script>
+$('#id_name').keydown(function () {
+  var value = this.value;
+  this.value = value.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
+});
+</script>
 
 {% endblock %}

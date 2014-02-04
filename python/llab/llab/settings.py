@@ -43,12 +43,13 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
     'django_gravatar',
     'project',
-    'accounts',
     'bootstrap3',
     'user_streams',
-    'user_streams.backends.user_streams_single_table_backend'
+    'accounts.user_streams_single_table_backend',
+    'django.contrib.humanize'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -62,8 +63,7 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'llab.urls'
 
-USER_STREAMS_BACKEND = ('user_streams.'
-                        'backends.'
+USER_STREAMS_BACKEND = ('accounts.'
                         'user_streams_single_table_backend.'
                         'SingleTableDatabaseBackend')
 
@@ -98,3 +98,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+AUTH_USER_MODEL = 'accounts.User'

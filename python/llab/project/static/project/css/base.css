@@ -21,5 +21,19 @@
 }
 
 .tooltip-inner {
-    width: 100px !important;
+    min-width: 100px !important;
+    font-size: 80%;
+}
+
+.gravatar {
+    border-radius: 4px;
+}
+
+.nav .alert-info span.glyphicon {
+    color: #31708f !important;
+}
+
+.newsfeed-time {
+    position: relative;
+    top: -10px;
 }

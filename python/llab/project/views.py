@@ -12,6 +12,7 @@ from .models import Project
 @login_required
 def project_index(request):
     newsfeed = user_streams.get_stream_items(request.user)
+    newsfeed.update(seen=True)
     context = {'newsfeed': newsfeed}
     return render(request, 'project/index.html', context)
 

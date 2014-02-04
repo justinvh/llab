@@ -2,7 +2,6 @@ import os
 import user_streams
 
 from django.db import models, transaction
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
@@ -20,16 +19,21 @@ Permission = make_bitwise_enumeration(
 
 
 class Project(models.Model):
-    owner = models.ForeignKey(User, related_name='projects')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL,
+                              related_name='projects')
     fork = models.ForeignKey('Project', related_name='forks', null=True)
-    private = models.BooleanField(default=False)
+    private = models.BooleanField(
+        verbose_name='Make it a private repository?', default=False)
     name = models.SlugField(
+        verbose_name='Repository Name',
         help_text=('Enter a valid name consisting of letters, '
                    'numbers, underscores or hyphens.'))
-    description = models.CharField(max_length=255)
+    description = models.CharField(
+        verbose_name='Repository Description',
+        max_length=255, help_text=('Enter a short, yet descriptive comment.'))
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    starred_by = models.ManyToManyField(User)
+    starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
     @property
     def git(self):
@@ -141,6 +145,6 @@ class Group(models.Model):
 
 
 class Role(models.Model):
-    user = models.ForeignKey(User, related_name='+')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+')
     project = models.ForeignKey(Project, related_name='roles')
     group = models.ForeignKey(Group, related_name='+')

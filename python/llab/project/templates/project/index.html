@@ -1,6 +1,7 @@
 {% extends "project/base.html" %}
 
 {% load bootstrap3 %}
+{% load humanize %}
 
 {% block "project_content" %}
 <div class="container-llab">
@@ -17,10 +18,12 @@
     <h3>Your News Feed</h3>
     <p>Your news feed is an activity stream for your projects and the projects
        that you watch. Keep an eye out for any updates!</p>
+     <hr>
     <ul class="media-list">
       {% for item in newsfeed %}
       <li class="media">
         {{ item.content|safe }}
+        <span class="text-muted newsfeed-time"><small>{{ item.created_at|naturaltime }}</small></span>
       </li>
       {% empty %}
       <li class="media">
