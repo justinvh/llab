@@ -1,0 +1,8 @@
+{% load gravatar %}
+
+<a class="pull-left" href="#">
+    {% gravatar user.email 64 g %}
+</a>
+<div class="media-body">
+  <h4 class="media-heading"><a href="#">{{ user.username }}</a> has joined the party!</h4>
+</div>
