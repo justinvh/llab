@@ -1,9 +1,5 @@
-import user_streams
-
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth import models as auth_models
-from django.template.loader import render_to_string
+from django.conf import settings
 
 from utils.enumeration import make_bitwise_enumeration, BitwiseSet
 
@@ -16,37 +12,13 @@ Permission = make_bitwise_enumeration(
                    'remove_member'))
 
 
-class User(AbstractUser):
-    """Abstract representation of an entity that can manage projects.
-
-    Users can either be registered people--or organizations.
-
-    """
-    owner = models.ForeignKey(User)
-    roles = models.ManyToManyField(Role)
-    last_event_stream = models.DateTimeField(auto_now_add=True)
-
-    def has_stream_notifications(self):
-        return user_streams.get_stream_items(self).filter(seen=False).exists()
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super(User, self).save(*args, **kwargs)
-        if is_new:
-            template = 'accounts/activity-feed/new-user.html'
-            context = {'user': self}
-            users = [self]
-            content = render_to_string(template, context)
-            user_streams.add_stream_item(users, content)
-
-
 class Group(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     _permissions = models.IntegerField()
 
     @classmethod
     def builtins(cls):
-        names = ('Admin', 'User', 'Test', 'Manager', 'Developer')
+        names = ('Admin', 'settings.AUTH_USER_MODEL', 'Test', 'Manager', 'Developer')
         return cls.objects.filter(name__in=names)
 
     @classmethod
@@ -106,9 +78,11 @@ class Role(models.Model):
 
 
 class Organization(models.Model):
-    name = models.CharField(max_length=255)
-    owner = models.ForeignKey(User)
+    name = models.SlugField(
+                unique=True,
+                verbose_name='Organization Name',
+                help_text=('Enter a valid name consisting of letters, '
+                           'numbers, underscores or hyphens.'))
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL)
     roles = models.ManyToManyField(Role)
 
-
-auth_models.User = User

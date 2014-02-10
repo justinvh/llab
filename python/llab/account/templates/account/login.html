@@ -1,0 +1,29 @@
+{% extends "project/base.html" %}
+{% load bootstrap3 %}
+
+{% block "project_content" %}
+
+<div class="row">
+  <div class="col-md-4 center-block no-float">
+    {% if user.is_authenticated %}
+    <div class="alert alert-warning">
+      <span class="glyphicon glyphicon-exclamation-sign"></span>
+      {{ user.username }}, did you mean to <a href="{% url "account:logout" %}">sign out</a>?
+    </div>
+    {% endif %}
+
+    <form method="post" class="form" action="{% url 'account:login' %}">
+      {% csrf_token %}
+
+      {% bootstrap_form form %} {% buttons %}
+
+      <button type="submit" class="btn btn-primary">
+        {% bootstrap_icon "log-in" %} Submit
+      </button>
+      {% endbuttons %}
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+  </div>
+</div>
+
+{% endblock %}

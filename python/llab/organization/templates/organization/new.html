@@ -5,25 +5,27 @@
 
 <div class="row">
   <div class="col-md-4 center-block no-float">
-    {% if user.is_authenticated %}
-    <div class="alert alert-warning">
+    <div class="alert alert-info">
       <span class="glyphicon glyphicon-exclamation-sign"></span>
-      {{ user.username }}, did you mean to <a href="{% url "accounts:logout" %}">sign out</a>?
+      First, let's give your organization a name.
     </div>
-    {% endif %}
-
-    <form method="post" class="form" action="{% url 'accounts:login' %}">
+    <form method="post" class="form" action="{% url 'organization:new' %}">
       {% csrf_token %}
 
       {% bootstrap_form form %} {% buttons %}
 
       <button type="submit" class="btn btn-primary">
-        {% bootstrap_icon "log-in" %} Submit
+        {% bootstrap_icon "arrow-right" %} Next
       </button>
       {% endbuttons %}
-      <input type="hidden" name="next" value="{{ next }}">
     </form>
   </div>
 </div>
 
+<script>
+$('#id_organization-name').keydown(function () {
+  var value = this.value;
+  this.value = value.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
+});
+</script>
 {% endblock %}

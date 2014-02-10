@@ -9,7 +9,7 @@ from django.template.defaultfilters import slugify
 from llab import settings
 from utils.git import Git
 
-from accounts.models import Organization
+from organization.models import Organization
 
 
 class Project(models.Model):

@@ -39,7 +39,7 @@
           <span class="glyphicon glyphicon-book"></span>
           New Repository</a>
       </li>
-      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">
+      <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "organization:new" %}">
           <span class="glyphicon glyphicon-globe"></span>
           New Organization</a>
       </li>
@@ -51,7 +51,7 @@
     </a>
   </li>
   <li>
-    <a href="{% url "accounts:logout" %}">
+    <a href="{% url "account:logout" %}">
       <span class="glyphicon glyphicon-log-out" data-toggle="tooltip" data-placement="bottom" title="Sign out"></span>
     </a>
   </li>

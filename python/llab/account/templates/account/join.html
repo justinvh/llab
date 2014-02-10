@@ -8,11 +8,11 @@
     {% if user.is_authenticated %}
     <div class="alert alert-warning">
       <span class="glyphicon glyphicon-exclamation-sign"></span>
-      {{ user.username }}, did you mean to <a href="{% url "accounts:logout" %}">sign out</a>?
+      {{ user.username }}, did you mean to <a href="{% url "account:logout" %}">sign out</a>?
     </div>
     {% endif %}
 
-    <form method="post" class="form" action="{% url 'accounts:register' %}">
+    <form method="post" class="form" action="{% url 'account:join' %}">
       {% csrf_token %}
 
       {% bootstrap_form form %} {% buttons %}

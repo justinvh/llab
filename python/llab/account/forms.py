@@ -1,9 +1,9 @@
 from django import forms
 
-from accounts.models import User, Organization, Group, Permission
+from .models import User
 
 
-class UserCreationForm(forms.ModelForm):
+class UserForm(forms.ModelForm):
     """A form for creating new users. Includes all the required
     fields, plus a repeated password."""
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
@@ -23,27 +23,8 @@ class UserCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         # Save the provided password in hashed format
-        user = super(UserCreationForm, self).save(commit=False)
+        user = super(UserForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
         return user
-
-
-class OrganizationCreationForm(forms.ModelForm):
-    class Meta:
-        model = Organization
-        fields = ('name',)
-
-
-class GroupForm(forms.ModelForm):
-    permissions = forms.MultiChoiceField(Permission.choices, required=False)
-    predefined = forms.ModelChoiceField(queryset=Group.objects.none())
-
-    def __init__(self, predefined=Group.builtins(), *args, **kwargs):
-        super(GroupForm, self).__init__(*args, **kwargs)
-        self.fields['predefined'].queryset = predefined
-
-    class Meta:
-        model = Group
-        fields = ('name',)
