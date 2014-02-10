@@ -1,10 +1,21 @@
+class PermissionBase(object):
+    @classmethod
+    def permission_as_int(cls, exclude=[]):
+        permission_bitwise = 0
+        for _, permission in self.choices.iteritems():
+            if permission in exclude:
+                continue
+            permission_bitwise |= permission
+        return permission_bitwise
+
+
 def make_bitwise_enumeration(name, values):
     choices = [(p, 1 << i) for i, p in enumerate(values)]
     reverse = [(i, p) for p, i in choices]
     params = dict(choices)
     params['choices'] = choices
     params['value_key'] = dict(reverse)
-    return type(name, (object,), params)
+    return type(name, (PermissionBase,), params)
 
 
 class BitwiseSet(set):
@@ -29,4 +40,3 @@ class BitwiseSet(set):
     def __repr__(self):
         values = dict((self.klass.value_key[i], i) for i in self)
         return 'BitwiseSet([{}])'.format(values)
-

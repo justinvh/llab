@@ -7,20 +7,15 @@ from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
 from llab import settings
-from utils.enumeration import make_bitwise_enumeration, BitwiseSet
 from utils.git import Git
 
-Permission = make_bitwise_enumeration(
-    'Permission', ('download_code', 'fork_project', 'read_project',
-                   'read_wiki', 'read_issue', 'read_milestone',
-                   'read_project_snippet', 'read_team_member',
-                   'read_merge_request', 'read_note', 'write_issue',
-                   'write_not'))
+from accounts.models import Organization
 
 
 class Project(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               related_name='projects')
+    organization = models.ForeignKey(Organization, null=True)
     fork = models.ForeignKey('Project', related_name='forks', null=True)
     private = models.BooleanField(
         verbose_name='Make it a private repository?', default=False)
@@ -83,7 +78,10 @@ class Project(models.Model):
         return content
 
     def get_absolute_url(self):
-        kwds = {'owner': self.owner.username, 'project': self.name}
+        owner = self.owner.username
+        if self.organization:
+            owner = self.organization.name
+        kwds = {'owner': owner, 'project': self.name}
         return reverse('project:view', kwargs=kwds)
 
     def get_absolute_path(self):
@@ -106,8 +104,14 @@ class Project(models.Model):
 
         # Create a new activity stream depending if the project is forked
         template = 'project/activity-feed/created.html'
-        context = {'user': self.owner, 'project': self}
-        users = [self.owner]
+        context = {'user': self.owner, 'project': self,
+                   'organization': self.organization}
+
+        # We either dispatch to the organization or to the owner
+        users = (self.owner,)
+        if self.organization:
+            users = (role.user for role in self.organization.roles)
+
         if self.fork:
             template = 'project/activity-feed/forked.html'
             context['parent'] = self.fork
@@ -116,35 +120,10 @@ class Project(models.Model):
         user_streams.add_stream_item(users, content)
 
     def full_name(self):
-        return os.path.join(self.owner.username, self.name)
+        owner = self.owner.username
+        if self.organization:
+            owner = self.organization.name
+        return os.path.join(owner, self.name)
 
     def __unicode__(self):
         return self.full_name()
-
-
-class Group(models.Model):
-    name = models.CharField(max_length=255)
-    _permissions = models.IntegerField()
-
-    @property
-    def permissions(self):
-        return BitwiseSet(self, '_permission_mapping', Permission)
-        if hasattr(self, '_permission_mapping'):
-            return self._permission_mapping
-        self._permission_mapping = BitwiseSet(Permission, self, '_permissions')
-        for permission, value in Permission.choices:
-            if self._permissions & value:
-                self._permission_mapping.add(getattr(Permission, permission))
-        return self._permission_mapping
-
-    @permissions.setter
-    def permissions(self, permission_set):
-        self._permissions = 0
-        for value in permission_set:
-            self._permissions |= value
-
-
-class Role(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+')
-    project = models.ForeignKey(Project, related_name='roles')
-    group = models.ForeignKey(Group, related_name='+')

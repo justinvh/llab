@@ -1,6 +1,6 @@
 from django import forms
 
-from accounts.models import User
+from accounts.models import User, Organization, Group, Permission
 
 
 class UserCreationForm(forms.ModelForm):
@@ -28,3 +28,22 @@ class UserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class OrganizationCreationForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        fields = ('name',)
+
+
+class GroupForm(forms.ModelForm):
+    permissions = forms.MultiChoiceField(Permission.choices, required=False)
+    predefined = forms.ModelChoiceField(queryset=Group.objects.none())
+
+    def __init__(self, predefined=Group.builtins(), *args, **kwargs):
+        super(GroupForm, self).__init__(*args, **kwargs)
+        self.fields['predefined'].queryset = predefined
+
+    class Meta:
+        model = Group
+        fields = ('name',)

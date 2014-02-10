@@ -4,6 +4,10 @@
     {% gravatar user.email 64 g %}
 </a>
 <div class="media-body">
+    {% if organization %}
+    <h4 class="media-heading"><a href="#">{{ user.username }}</a> created <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a> under <a href="#">{{ organization.name }}</a></h4>
+    {% else %}
     <h4 class="media-heading"><a href="#">{{ user.username }}</a> created <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a></h4>
+    {% endif %}
     <p><a href="#">{{ user.username }}</a> is now the owner of <a href="#">{{ user.projects.count }}</a> project{{ user.projects.count|pluralize }}. Hooray!</p>
 </div>
