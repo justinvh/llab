@@ -1,8 +1,3 @@
-.container-llab {
-    width: 980px;
-    margin: 0 auto;
-}
-
 .navbar-brand {
     opacity: 0.5;
 }
@@ -36,4 +31,8 @@
 .newsfeed-time {
     position: relative;
     top: -10px;
+}
+
+.no-float {
+    float: none !important;
 }
