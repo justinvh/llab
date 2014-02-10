@@ -93,7 +93,7 @@ class Project(models.Model):
     @transaction.atomic
     def save(self, *args, **kwargs):
         self.name = slugify(self.name)
-        create_project = True if not self.pk else False
+        create_project = self.pk is None
         super(Project, self).save(*args, **kwargs)
         if create_project:
             self.create_project()

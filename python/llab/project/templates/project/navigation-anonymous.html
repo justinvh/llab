@@ -1,0 +1,27 @@
+{% load bootstrap3 %}
+
+<ul class="nav navbar-nav">
+  <form class="navbar-form navbar-left" role="search">
+    <div class="form-group">
+      <input type="text" class="form-control" placeholder="Search">
+    </div>
+  </form>
+
+  <li class="border-left">
+    <a href="#">Explore</a>
+  </li>
+  <li><a href="#">Help</a></li>
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+  <li class="border-left">
+    <a href="{% url "accounts:login" %}">
+      <span class="glyphicon glyphicon-log-in" data-toggle="tooltip" data-placement="bottom" title="Sign in"></span>
+    </a>
+  </li>
+  <li>
+    <a href="{% url "accounts:register" %}">
+      <span class="glyphicon glyphicon-user" data-toggle="tooltip" data-placement="bottom" title="Register"></span>
+    </a>
+  </li>
+</ul>

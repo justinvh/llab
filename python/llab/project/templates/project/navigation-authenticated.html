@@ -1,0 +1,58 @@
+{% load bootstrap3 %}
+{% load gravatar %}
+
+<ul class="nav navbar-nav">
+  {% if user.has_stream_notifications %}
+  <li class="border-left-right alert-info" data-toggle="tooltip" data-placement="bottom" title="You have unread notifications.">
+  {% else %}
+  <li class="border-left-right" data-toggle="tooltip" data-placement="bottom" title="You do not have any notifications.">
+  {% endif %}
+    <a href="{% url "project:index" %}">
+      <span class="glyphicon glyphicon-record"></span>
+    </a>
+  </li>
+
+  <form class="navbar-form navbar-left" role="search">
+    <div class="form-group">
+      <input type="text" class="form-control" placeholder="Search">
+    </div>
+  </form>
+
+  <li class="border-left">
+    <a href="#">Explore</a>
+  </li>
+  <li><a href="#">Help</a></li>
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+  <li class="border-left-right">
+    <a href="#">
+      {% gravatar user.email 20 g %}
+      <strong>{{ user.username }}</strong></a>
+  </li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+      <span class="glyphicon glyphicon-plus-sign" data-toggle="tooltip" data-placement="bottom" title="Create new..."></span>
+    </a>
+    <ul class="dropdown-menu">
+      <li role="presentation"><a role="menuitem" tabindex="-1" href="{% url "project:new" %}">
+          <span class="glyphicon glyphicon-book"></span>
+          New Repository</a>
+      </li>
+      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">
+          <span class="glyphicon glyphicon-globe"></span>
+          New Organization</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="#">
+      <span class="glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="Account settings"></span>
+    </a>
+  </li>
+  <li>
+    <a href="{% url "accounts:logout" %}">
+      <span class="glyphicon glyphicon-log-out" data-toggle="tooltip" data-placement="bottom" title="Sign out"></span>
+    </a>
+  </li>
+</ul>
