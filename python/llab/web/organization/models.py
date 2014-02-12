@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 
-from utils.enumeration import make_bitwise_enumeration, BitwiseSet
+from llab.utils.enumeration import make_bitwise_enumeration, BitwiseSet
 
 Permission = make_bitwise_enumeration(
     'Permission', ('download_code', 'fork_project', 'commit', 'read_project',

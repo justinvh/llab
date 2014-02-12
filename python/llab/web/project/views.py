@@ -3,7 +3,7 @@ import user_streams
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
-from utils.request import post_or_none
+from llab.utils.request import post_or_none
 
 from .forms import ProjectForm
 from .models import Project

@@ -1,5 +1,5 @@
 from django.db import models
-from llab import settings
+from web import settings
 
 
 class StreamItem(models.Model):

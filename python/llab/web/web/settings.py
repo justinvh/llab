@@ -1,5 +1,5 @@
 """
-Django settings for llab project.
+Django settings for llab web project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -62,13 +62,13 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'llab.urls'
+ROOT_URLCONF = 'web.urls'
 
 USER_STREAMS_BACKEND = ('account.'
                         'user_streams_single_table_backend.'
                         'SingleTableDatabaseBackend')
 
-WSGI_APPLICATION = 'llab.wsgi.application'
+WSGI_APPLICATION = 'web.wsgi.application'
 
 
 # Database

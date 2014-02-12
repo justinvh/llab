@@ -6,8 +6,8 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
-from llab import settings
-from utils.git import Git
+from web import settings
+from llab.utils.git import Git
 
 from organization.models import Organization
 
