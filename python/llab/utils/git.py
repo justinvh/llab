@@ -14,6 +14,25 @@ class Git(object):
         else:
             raise os.error('path or repo was not specified or found')
 
+    def commit(self, message):
+        return self.repo.commit(message=message)
+
+    def add(self, file_or_files):
+        files = file_or_files
+        if not isinstance(file_or_files, (list, tuple)):
+            files = [file_or_files]
+        return self.repo.add(paths=files)
+
+    def push(self, remote, branch):
+        from dulwich.client import get_transport_and_path
+        repo = self.repo
+        client, path = get_transport_and_path(remote)
+        pack_contents = repo.object_store.generate_pack_contents
+        def update_refs(refs):
+            branch = 'refs/heads/' + branch
+            refs[branch] = repo[branch]
+        return client.send_pack(path, update_refs, pack_contents)
+
     @classmethod
     def clone_or_create(cls, path, clone=None):
         """clone_or_create -> Git.
