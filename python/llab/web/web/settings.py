@@ -48,7 +48,7 @@ INSTALLED_APPS = (
     # Project apps
     'account',
     'account.settings',
-    'account.organization',
+    'organization',
     'project',
 
     # Local builtins

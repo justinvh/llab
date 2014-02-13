@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from llab.utils.git import Git
 
-from account.organization.models import Organization
+from organization.models import Organization
 
 
 class Project(models.Model):
