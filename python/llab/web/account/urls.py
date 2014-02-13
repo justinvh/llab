@@ -3,6 +3,9 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('account.views',
     # Django handles the other "account" views
     url(r'^join/$', 'account_join', name='join'),
+
+    # Manage the user's account keys
+    url(r'^settings/', include('account.settings.urls', namespace='settings')),
 )
 
 urlpatterns += patterns('',

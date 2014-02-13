@@ -5,11 +5,12 @@ from django.db import models, transaction
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
+from django.utils.translation import ugettext as _
 
-from web import settings
+from django.conf import settings
 from llab.utils.git import Git
 
-from organization.models import Organization
+from account.organization.models import Organization
 
 
 class Project(models.Model):
@@ -18,14 +19,14 @@ class Project(models.Model):
     organization = models.ForeignKey(Organization, null=True)
     fork = models.ForeignKey('Project', related_name='forks', null=True)
     private = models.BooleanField(
-        verbose_name='Make it a private repository?', default=False)
+        verbose_name=_('Make it a private repository?'), default=False)
     name = models.SlugField(
         verbose_name='Repository Name',
-        help_text=('Enter a valid name consisting of letters, '
-                   'numbers, underscores or hyphens.'))
+        help_text=_('Enter a valid name consisting of letters, '
+                    'numbers, underscores or hyphens.'))
     description = models.CharField(
         verbose_name='Repository Description',
-        max_length=255, help_text=('Enter a short, yet descriptive comment.'))
+        max_length=255, help_text=_('Enter a short, yet descriptive comment.'))
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL)

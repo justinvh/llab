@@ -37,19 +37,27 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    # Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Project apps
     'account',
+    'account.settings',
+    'account.organization',
     'project',
-    'organization',
+
+    # Local builtins
+    'account.user_streams_single_table_backend',
+
+    # Third party
     'django_gravatar',
     'bootstrap3',
     'user_streams',
-    'account.user_streams_single_table_backend',
     'django.contrib.humanize'
 )
 

@@ -4,7 +4,7 @@ import struct
 
 from Crypto.Cipher import AES
 
-from llab.web.conf import settings
+from llab.web import settings
 
 mode = AES.MODE_CBC
 
