@@ -1,55 +1,62 @@
 #!/usr/bin/env python
 import argparse
 import sys
+import os
+import subprocess
 
 
 def build_parser(subparsers):
     # Various verification related commands
     verify_group = subparsers.add_argument_group(
         'Verify', 'Commands for verifying a user permission against a project')
-    verify_group.add_argument('--verify',
+    verify_group.add_argument('--user',
                               help='Verify a user permission',
                               metavar='USER_ID')
-    verify_group.add_argument('--project',
+    verify_group.add_argument('project',
                               help='Verify against project',
-                              metavar='PROJECT_ID')
+                              metavar='PROJECT_SLUG')
 
 
-def verify_user(user_id, project_id):
+def verify_user(user_id, project_path):
     from llab.web.project.models import Project
     from llab.web.account.models import User
     try:
         # Verify that this project is managed and available
-        project = Project.objects.get(pk=project_id)
+        path_split = project_path.split(os.sep)
+        if len(path_split) != 2:
+            return False
+
+        owner, project_name = path_split
+        project = Project.objects.get(owner__username=owner, name=project_name)
         user = User.objects.get(pk=user_id)
 
         # Easy check, owners can always commit
         if project.owner == user:
-            return True
+            return project, user
 
         # If they are part of the organization and have commit access
-        if project.organization:
-            return project.organization.user_can_commit(user)
+        if project.organization and project.organization.user_can_commit(user):
+            return project, user
 
         # Otherwise the user can not commit to this project.
-        return False
+        msg = '[DENIED] {} does not have permissions to commit to "{}".'
+        sys.exit(msg.format(user.username, project.full_name()))
 
     except (Project.DoesNotExist, User.DoesNotExist):
-        return False
-
+        sys.exit('Project or user does not exist')
 
 
 def parse_args(args):
     # Fetch user information
-    user_id = args.verify
-    project_id = args.project
+    user_id = args.user
+    project_path = args.project
 
     # Process verification based args
-    if user_id or project_id:
-        if not user_id or not project_id:
+    if user_id or project_path:
+        if not user_id or not project_path:
             sys.exit('--project and --verify are required for this command')
-        if verify_user(user_id, project_id):
-            sys.exit("true")
+        project, user = verify_user(user_id, project_path)
+        os.execvp('git-receive-pack', ['', project.get_absolute_path()])
 
     sys.exit("false")
 

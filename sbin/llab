@@ -9,9 +9,13 @@ import sys
 parser = argparse.ArgumentParser(description='llab command line tool')
 subparsers = parser.add_subparsers(dest='command')
 
+# Always require a user id
+parser.add_argument('--user', help='The user id', metavar='USER_ID', type=int)
+parser.add_argument('--ssh', help='True if over SSH', action='store_true')
+
 # Construct the pre-receive parser
 pre_receive_parser = subparsers.add_parser(
-    'pre-receive', help='Pre-receive Hook Command Line Tools')
+    'git-receive-pack', help='Pre-receive Hook Command Line Tools')
 
 # Construct the post-receive parser
 post_receive_parser = subparsers.add_parser(
@@ -21,8 +25,13 @@ post_receive_parser = subparsers.add_parser(
 update_parser = subparsers.add_parser(
     'update', help='Update Hook Command Line Tools')
 
+# A hack around passing arguments via SSH
+argv = sys.argv
+if '--ssh' in sys.argv:
+    argv = ' '.join(sys.argv).replace("'", '').split(' ')[1:]
 
-args, remaining_args = parser.parse_known_args()
+args, remaining_args = parser.parse_known_args(argv)
+handoff_args = ['--user', str(args.user)] + remaining_args
 
-if args.command == 'pre-receive':
-    subprocess.call(['llab-pre-receive'] + remaining_args)
+if args.command == 'git-receive-pack':
+    subprocess.call(['llab-receive-pack'] + handoff_args)
