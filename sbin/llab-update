@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+import argparse
+
+
+def build_parser(subparsers):
+    pass
+
+
+def parse_args(args):
+    pass
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='llab update tool')
+    build_parser(parser)
+    parse_args(argparse.parse_args())

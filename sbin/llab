@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+"""Command line tool for managing and dispatching commands for the Git client.
+
+"""
+import argparse
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(description='llab command line tool')
+subparsers = parser.add_subparsers(dest='command')
+
+# Construct the pre-receive parser
+pre_receive_parser = subparsers.add_parser(
+    'pre-receive', help='Pre-receive Hook Command Line Tools')
+
+# Construct the post-receive parser
+post_receive_parser = subparsers.add_parser(
+    'post-receive', help='Post-receive Hook Command Line Tools')
+
+# Construct the post-receive parser
+update_parser = subparsers.add_parser(
+    'update', help='Update Hook Command Line Tools')
+
+
+args, remaining_args = parser.parse_known_args()
+
+if args.command == 'pre-receive':
+    subprocess.call(['llab-pre-receive'] + remaining_args)

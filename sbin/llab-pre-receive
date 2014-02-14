@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+import argparse
+import sys
+
+
+def build_parser(subparsers):
+    # Various verification related commands
+    verify_group = subparsers.add_argument_group(
+        'Verify', 'Commands for verifying a user permission against a project')
+    verify_group.add_argument('--verify',
+                              help='Verify a user permission',
+                              metavar='USER_ID')
+    verify_group.add_argument('--project',
+                              help='Verify against project',
+                              metavar='PROJECT_ID')
+
+
+def verify_user(user_id, project_id):
+    from llab.web.project.models import Project
+    from llab.web.account.models import User
+    try:
+        # Verify that this project is managed and available
+        project = Project.objects.get(pk=project_id)
+        user = User.objects.get(pk=user_id)
+
+        # Easy check, owners can always commit
+        if project.owner == user:
+            return True
+
+        # If they are part of the organization and have commit access
+        if project.organization:
+            return project.organization.user_can_commit(user)
+
+        # Otherwise the user can not commit to this project.
+        return False
+
+    except (Project.DoesNotExist, User.DoesNotExist):
+        return False
+
+
+
+def parse_args(args):
+    # Fetch user information
+    user_id = args.verify
+    project_id = args.project
+
+    # Process verification based args
+    if user_id or project_id:
+        if not user_id or not project_id:
+            sys.exit('--project and --verify are required for this command')
+        if verify_user(user_id, project_id):
+            sys.exit("true")
+
+    sys.exit("false")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='llab pre-receive tool')
+    build_parser(parser)
+    parse_args(parser.parse_args())
