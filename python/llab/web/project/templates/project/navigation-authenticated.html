@@ -27,7 +27,7 @@
 <ul class="nav navbar-nav navbar-right">
   <li class="border-left-right">
     <a href="#">
-      {% gravatar user.email 20 g %}
+      {% gravatar user.gravatar 20 g %}
       <strong>{{ user.username }}</strong></a>
   </li>
   <li class="dropdown">
@@ -46,7 +46,7 @@
     </ul>
   </li>
   <li>
-    <a href="#">
+    <a href="{% url "account:settings:profile" %}">
       <span class="glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="Account settings"></span>
     </a>
   </li>

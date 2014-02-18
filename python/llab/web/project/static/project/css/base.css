@@ -36,3 +36,12 @@
 .no-float {
     float: none !important;
 }
+
+.soft-border {
+    border: 1px solid #EFEFEF;
+    border-radius: 5px;
+}
+
+.gray-light {
+    opacity: 0.8;
+}

@@ -1,0 +1,60 @@
+{% extends "project/base.html" %}
+{% load bootstrap3 %}
+{% load gravatar %}
+
+{% block "project_content" %}
+
+<div class="row">
+
+  <div class="col-md-4">
+    {% include "settings/navigation.html" %}
+  </div>
+
+  <div class="col-md-8 center-block soft-border">
+    <h1>Hi, {{ user.greetings }}.</h1>
+    <p>There's not much to a profile. You can make it as elaborate as you want.</p>
+    <div class="row">
+
+      <!-- Form -->
+      <div class="col-md-8">
+        <form method="post" class="form" action="{% url 'account:settings:profile' %}">
+          {% csrf_token %}
+
+          {% bootstrap_form form %} {% buttons %}
+
+          <button type="submit" class="btn btn-primary">
+            {% bootstrap_icon "log-in" %} Update
+          </button>
+          {% endbuttons %}
+        </form>
+      </div>
+
+      <!-- User Profile Overview -->
+      <div class="col-md-4">
+        {% gravatar user.gravatar 220 g %}
+        <h3>{{ user.greetings_formal }}</h3>
+        <h4 class="gray-light">{{ user.username }}</h4>
+
+        <hr>
+
+        <div class="gray-light">
+          {% if user.profile.location %}<span class="glyphicon glyphicon-globe"></span>
+          {{ user.profile.location }}<br>
+          {% endif %}
+
+          {% if user.email %}<span class="glyphicon glyphicon-envelope"></span>
+            <a href="mailto:{{ user.email }}">{{ user.email }}</a><br>
+          {% endif %}
+
+          {% if user.profile.url %}<span class="glyphicon glyphicon-link"></span>
+            <a href="{{ user.profile.url }}">{{ user.profile.url }}</a><br>
+          {% endif %}
+          <span class="glyphicon glyphicon-dashboard"></span> Joined on {{ user.date_joined|date:'M d, Y' }}
+        </div>
+        <br>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

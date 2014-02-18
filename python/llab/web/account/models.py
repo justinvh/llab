@@ -12,15 +12,34 @@ class User(AbstractUser):
     def has_stream_notifications(self):
         return user_streams.get_stream_items(self).filter(seen=False).exists()
 
+    def greetings(self):
+        name = self.profile.name.split(' ')[0] if self.profile.name else None
+        return name or self.username
+
+    def greetings_formal(self):
+        return self.profile.name or self.username
+
+    def gravatar(self):
+        return self.profile.gravatar or self.email
+
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         super(User, self).save(*args, **kwargs)
-        if is_new:
-            template = 'account/activity-feed/new-user.html'
-            context = {'user': self}
-            users = [self]
-            content = render_to_string(template, context)
-            user_streams.add_stream_item(users, content)
+
+        # New users have a special bit of code to jump through
+        if not is_new:
+            return
+
+        # Demonstrate that the activity-feed is working
+        template = 'account/activity-feed/new-user.html'
+        context = {'user': self}
+        users = [self]
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(users, content)
+
+        # Create the initial profile for the user
+        from account.settings.models import Profile
+        Profile.objects.create(user=self, _participating=0, _watching=0)
 
 
 auth_models.User = User

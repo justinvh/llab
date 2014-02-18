@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 
 from llab.utils.request import post_or_none
 
-from .forms import UserForm, PublicKeyForm
+from .forms import UserForm
 
 
 def account_join(request):
@@ -19,16 +19,4 @@ def account_join(request):
         return redirect('project:index')
     template = 'account/join.html'
     context = {'form': form}
-    return render(request, template, context)
-
-
-@login_required
-def account_settings_ssh(request):
-    post_data = post_or_none(request)
-    form = PublicKeyForm(post_data, prefix='public-key')
-    if post_data and form.is_valid():
-        form.save(user=request.user)
-        return redirect('account:account_keys')
-    template = 'account/settings/ssh.html'
-    context = {'form': form, 'keys': request.user.public_keys.all()}
     return render(request, template, context)

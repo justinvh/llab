@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('views',
+urlpatterns = patterns('account.settings.views',
     # The overall settings
     url(r'^profile/$', 'settings_profile', name='profile'),
 
