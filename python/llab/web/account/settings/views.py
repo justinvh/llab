@@ -5,6 +5,12 @@ from llab.utils.request import post_or_none
 
 from .forms import PublicKeyForm
 
+
+@login_required
+def settings_profile(request):
+    pass
+
+
 @login_required
 def settings_ssh(request):
     post_data = post_or_none(request)

@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 
 from llab.utils.request import post_or_none
 
-from .forms import UserForm
+from .forms import UserForm, PublicKeyForm
+
 
 def account_join(request):
     post_data = post_or_none(request)

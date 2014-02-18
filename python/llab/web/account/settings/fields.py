@@ -3,6 +3,7 @@ from django.db.models import TextField
 from django.core import exceptions
 from django.utils.translation import ugettext as _
 
+
 class PublicKeyField(TextField):
     def validate(self, value, model_instance):
         """
