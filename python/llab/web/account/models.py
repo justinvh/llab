@@ -41,5 +41,12 @@ class User(AbstractUser):
         from account.settings.models import Profile
         Profile.objects.create(user=self, _participating=0, _watching=0)
 
+        # Create the initial email bindings if the email is provided for
+        # this account. The initial email, if available is always the primary
+        from account.settings.models import EmailAccount
+        if self.email:
+            EmailAccount.objects.create(
+                user=self, email=self.email, primary=True)
+
 
 auth_models.User = User
