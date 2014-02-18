@@ -18,11 +18,12 @@ class Group(models.Model):
 
     @classmethod
     def builtins(cls):
-        names = ('Admin', 'settings.AUTH_USER_MODEL', 'Test', 'Manager', 'Developer')
+        names = ('Admin', 'settings.AUTH_USER_MODEL', 'Test',
+                 'Manager', 'Developer')
         return cls.objects.filter(name__in=names)
 
     @classmethod
-    def get_or_create_from_permission(name, exclude=[]):
+    def get_or_create_from_permission(cls, name, exclude=[]):
         permissions = Permission.permission_as_int(exclude=exclude)
         admin = {'name': name,
                  '_permissions': permissions}
@@ -79,10 +80,8 @@ class Role(models.Model):
 
 class Organization(models.Model):
     name = models.SlugField(
-                unique=True,
-                verbose_name='Organization Name',
-                help_text=('Enter a valid name consisting of letters, '
-                           'numbers, underscores or hyphens.'))
+        unique=True, verbose_name='Organization Name',
+        help_text=('Enter a valid name consisting of letters, '
+                   'numbers, underscores or hyphens.'))
     owner = models.ForeignKey(settings.AUTH_USER_MODEL)
     roles = models.ManyToManyField(Role)
-
