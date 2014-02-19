@@ -1,3 +1,7 @@
+import user_streams
+from django.template.loader import render_to_string
+
+
 def post_or_none(request):
     """post_or_none -> dict.
 
@@ -14,3 +18,9 @@ def get_or_none(request):
 
     """
     return request.GET if request.method == 'GET' else None
+
+
+def notify_users(users, template, context):
+    users = users if isinstance(users, (list, tuple)) else [users]
+    content = render_to_string(template, context)
+    user_streams.add_stream_item(users, content)

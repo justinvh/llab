@@ -3,7 +3,8 @@ import user_streams
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import models as auth_models
-from django.template.loader import render_to_string
+
+from llab.utils.request import notify_users
 
 
 class User(AbstractUser):
@@ -31,11 +32,9 @@ class User(AbstractUser):
             return
 
         # Demonstrate that the activity-feed is working
-        template = 'account/activity-feed/new-user.html'
+        template = 'account/activity-feed/user-new.html'
         context = {'user': self}
-        users = [self]
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(users, content)
+        notify_users(self, template, context)
 
         # Create the initial profile for the user
         from account.settings.models import Profile

@@ -1,9 +1,0 @@
-{% load gravatar %}
-
-<a class="pull-left" href="#">
-    {% gravatar user.email 64 g %}
-</a>
-<div class="media-body">
-  <h4 class="media-heading">You added public key
-    <a href="{% url 'account:settings:ssh' %}"><strong>{{ public_key.name }}</strong></a>.
-</div>

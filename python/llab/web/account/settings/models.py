@@ -1,14 +1,12 @@
-import user_streams
-
 from django.db import models
 from django.utils.translation import ugettext as _
-from django.template.loader import render_to_string
 
 from account.models import User
 from .fields import PublicKeyField
 from django.conf import settings
 
 from llab.utils.enumeration import make_bitwise_enumeration, BitwiseSet
+from llab.utils.request import notify_users
 
 
 Notification = make_bitwise_enumeration('Notification', ('email', 'web'))
@@ -92,13 +90,19 @@ class PublicKey(models.Model):
         self.sha1sum = sha1sum
         return encrypt
 
+    def delete(self, *args, **kwargs):
+        # Make sure that the user knows about the key being deleted
+        user = self.user
+        template = 'settings/activity-feed/public-key-delete.html'
+        context = {'user': user, 'public_key': self}
+        notify_users(user, template, context)
+        super(PublicKey, self).delete(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         super(PublicKey, self).save(*args, **kwargs)
 
         # Make sure that the user knows about the key being added
         user = self.user
-        template = 'settings/activity-feed/new-public-key.html'
+        template = 'settings/activity-feed/public-key-new.html'
         context = {'user': user, 'public_key': self}
-        users = [user]
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(users, content)
+        notify_users(user, template, context)

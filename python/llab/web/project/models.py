@@ -1,14 +1,13 @@
 import os
-import user_streams
 
 from django.db import models, transaction
 from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
 
 from django.conf import settings
 from llab.utils.git import Git
+from llab.utils.request import notify_users
 
 from organization.models import Organization
 
@@ -44,12 +43,10 @@ class Project(models.Model):
 
     @transaction.atomic
     def star(self, user):
+        self.starred_by.add(user)
         template = 'project/activity-feed/star.html'
         context = {'user': user, 'project': self}
-        self.starred_by.add(user)
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(user, content)
-        return content
+        notify_users(user, template, context)
 
     @transaction.atomic
     def fork_to(self, user):
@@ -67,16 +64,12 @@ class Project(models.Model):
     def branch_add(self, branch_name):
         template = 'project/activity-feed/branch-add.html'
         context = {'project': self, 'branch': branch_name}
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(self.starred_by.all(), content)
-        return content
+        notify_users(self.starred_by.all(), template, context)
 
     def branch_remove(self, branch_name):
         template = 'project/activity-feed/branch-remove.html'
         context = {'project': self, 'branch': branch_name}
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(self.starred_by.all(), content)
-        return content
+        notify_users(self.starred_by.all(), template, context)
 
     def get_absolute_url(self):
         owner = self.owner.username
@@ -117,8 +110,7 @@ class Project(models.Model):
             template = 'project/activity-feed/forked.html'
             context['parent'] = self.fork
             users.append(self.fork.owner)
-        content = render_to_string(template, context)
-        user_streams.add_stream_item(users, content)
+        notify_users(users, template, context)
 
     def full_name(self):
         owner = self.owner.username

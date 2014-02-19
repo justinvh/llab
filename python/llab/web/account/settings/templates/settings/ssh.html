@@ -107,7 +107,7 @@ $('#id_public-key-name').keydown(function () {
 });
 
 $('.public-key-delete').click(function () {
-  $(this).hide().siblings('.public-key-alert').removeClass('hidden');
+  $(this).hide().parent().siblings('.public-key-alert').removeClass('hidden');
 });
 </script>
 
