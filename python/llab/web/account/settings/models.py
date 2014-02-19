@@ -60,6 +60,7 @@ class Profile(models.Model):
 
 
 class EmailAccount(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, related_name='email_accounts')
     email = models.EmailField()
     primary = models.BooleanField()
@@ -67,6 +68,7 @@ class EmailAccount(models.Model):
 
 class PublicKey(models.Model):
     name = models.SlugField()
+    created = models.DateTimeField(auto_now_add=True)
     _key = PublicKeyField(verbose_name=_('Key'))
     sha1sum = models.CharField(max_length=60)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
