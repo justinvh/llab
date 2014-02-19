@@ -18,8 +18,10 @@
           <ul class="nav nav-tabs">
             {% if user.public_keys.exists %}
             <li class="active"><a href="#registered-keys" data-toggle="tab">Registered Keys</a></li>
-            {% endif %}
             <li><a href="#new-key" data-toggle="tab">New Key</a></li>
+            {% else %}
+            <li class="active"><a href="#new-key" data-toggle="tab">New Key</a></li>
+            {% endif %}
           </ul>
 
           <div class="tab-content">
@@ -34,9 +36,22 @@
                   <ul class="list-group">
                     {% for public_key in user.public_keys.all %}
                     <li class="list-group-item">
-                      <a href="#" class="label label-danger pull-right">delete</a>
+                      <span class="cursor public-key-delete label label-danger pull-right">delete</span>
                       <strong>{{ public_key.name }}</strong>
                       <small class="gray-light" title="SHA1 of your public key">({{ public_key.sha1sum }})</small>
+                      <div class="alert alert-danger alert-dismissable public-key-alert hidden">
+                        <p>
+                          <strong>Hold on!</strong> Are you sure that you want to do delete <strong>{{ public_key.name }}</strong>?
+                          You will no longer be able to connect to llab with this key.
+                        </p>
+                        <p>
+                          <a href="{% url 'account:settings:ssh_delete' public_key_pk=public_key.pk %}">
+                            <button type="button" data-pk="{{ public_key.pk }}" class="btn btn-danger">
+                              Yes, delete it.
+                            </button>
+                          </a>
+                        </p>
+                      </div>
                     </li>
                     {% endfor %}
                   </ul>
@@ -44,7 +59,13 @@
               </div>
             </div>
             {% endif %}
+
+            {% if user.public_keys.exists %}
             <div class="tab-pane" id="new-key">
+            {% else %}
+            <div class="tab-pane active" id="new-key">
+            {% endif %}
+
               <div class="row">
                 <div class="col-md-12">
                   <h3>Adding a New Key</h3>
@@ -71,11 +92,18 @@
       </div>
     </div>
   </div>
+</div>
+
 <script>
 $('#nav-ssh').addClass('active');
+
 $('#id_public-key-name').keydown(function () {
   var value = this.value;
   this.value = value.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
+});
+
+$('.public-key-delete').click(function () {
+  $(this).hide().siblings('.public-key-alert').removeClass('hidden');
 });
 </script>
 

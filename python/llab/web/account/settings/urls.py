@@ -6,4 +6,8 @@ urlpatterns = patterns('account.settings.views',
 
     # Manage the user's account keys
     url(r'^ssh/$', 'settings_ssh', name='ssh'),
+
+    # Delete a key
+    url(r'^ssh/(?P<public_key_pk>\d+)/delete/$',
+        'settings_ssh_delete', name='ssh_delete'),
 )

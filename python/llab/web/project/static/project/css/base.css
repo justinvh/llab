@@ -45,3 +45,7 @@
 .gray-light {
     opacity: 0.8;
 }
+
+.cursor {
+    cursor: pointer;
+}
