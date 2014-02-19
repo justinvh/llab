@@ -1,5 +1,6 @@
 {% extends "project/base.html" %}
 {% load bootstrap3 %}
+{% load humanize %}
 {% load gravatar %}
 
 {% block "project_content" %}
@@ -36,7 +37,10 @@
                   <ul class="list-group">
                     {% for public_key in user.public_keys.all %}
                     <li class="list-group-item">
-                      <span class="cursor public-key-delete label label-danger pull-right">delete</span>
+                      <div class="pull-right">
+                        <span title="{{ public_key.created }}" class="label label-info">created {{ public_key.created|naturaltime }}</span>
+                        <span class="cursor public-key-delete label label-danger">delete</span>
+                      </div>
                       <strong>{{ public_key.name }}</strong>
                       <small class="gray-light" title="SHA1 of your public key">({{ public_key.sha1sum }})</small>
                       <div class="alert alert-danger alert-dismissable public-key-alert hidden">
