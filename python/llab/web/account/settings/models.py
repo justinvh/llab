@@ -1,5 +1,8 @@
+import user_streams
+
 from django.db import models
 from django.utils.translation import ugettext as _
+from django.template.loader import render_to_string
 
 from account.models import User
 from .fields import PublicKeyField
@@ -13,11 +16,11 @@ Notification = make_bitwise_enumeration('Notification', ('email', 'web'))
 
 class Profile(models.Model):
     user = models.OneToOneField(User)
-    name = models.CharField(max_length=255)
-    url = models.URLField()
-    company = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    gravatar = models.EmailField()
+    name = models.CharField(max_length=255, blank=True)
+    url = models.URLField(blank=True)
+    company = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    gravatar = models.EmailField(blank=True)
     _participating = models.IntegerField()
     _watching = models.IntegerField()
 
@@ -65,22 +68,35 @@ class EmailAccount(models.Model):
 class PublicKey(models.Model):
     name = models.SlugField()
     _key = PublicKeyField(verbose_name=_('Key'))
+    sha1sum = models.CharField(max_length=60)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              related_name='public_keys')
-    _key_changed = False
+
+    @property
+    def key(self):
+        return self.decrypt()
+
+    @key.setter
+    def key(self, value):
+        self._key = self.encrypt(value)
 
     def decrypt(self):
-        from utils import cipher
+        from llab.utils import cipher
         return cipher.decrypt(self._key, password='')
 
     def encrypt(self, key):
-        from utils import cipher
-        encrypt = cipher.encrypt(key, password='')
-        self._key_changed = True
+        from llab.utils import cipher
+        encrypt, sha1sum = cipher.encrypt(key, password='')
+        self.sha1sum = sha1sum
         return encrypt
 
     def save(self, *args, **kwargs):
         super(PublicKey, self).save(*args, **kwargs)
-        if self._key_changed:
-            from utils import gitolite
-            gitolite.add_key(self)
+
+        # Make sure that the user knows about the key being added
+        user = self.user
+        template = 'settings/activity-feed/new-public-key.html'
+        context = {'user': user, 'public_key': self}
+        users = [user]
+        content = render_to_string(template, context)
+        user_streams.add_stream_item(users, content)

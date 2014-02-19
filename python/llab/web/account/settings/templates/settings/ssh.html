@@ -1,22 +1,63 @@
 {% extends "project/base.html" %}
 {% load bootstrap3 %}
+{% load gravatar %}
 
 {% block "project_content" %}
 
 <div class="row">
-  <div class="col-md-4 center-block no-float">
-    <form method="post" class="form" action="{% url 'account:settings:ssh' %}">
-      {% csrf_token %}
 
-      {% bootstrap_form form %} {% buttons %}
+  <div class="col-md-4">
+    {% include "settings/navigation.html" %}
+  </div>
 
-      <button type="submit" class="btn btn-primary">
-        {% bootstrap_icon "log-in" %} Submit
-      </button>
-      {% endbuttons %}
-      <input type="hidden" name="next" value="{{ next }}">
-    </form>
+  <div class="col-md-8 center-block soft-border">
+    <div class="row">
+      <div class="col-md-12">
+        <h2>New Key</h2>
+        <p>How about a quick guide?
+          <code>
+            $ ssh-keygen &amp;&amp; cat $HOME/.ssh/id_rsa.pub
+          </code>
+        </p>
+        <form method="post" class="form" action="{% url 'account:settings:ssh' %}">
+          {% csrf_token %}
+
+          {% bootstrap_form form %} {% buttons %}
+
+          <button type="submit" class="btn btn-primary">
+            {% bootstrap_icon "log-in" %} Add Key
+          </button>
+          {% endbuttons %}
+        </form>
+      </div>
+    </div>
+
+    {% if user.public_keys.exists %}
+    <hr>
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Registered Keys</h2>
+        <ul class="list-group">
+          {% for public_key in user.public_keys.all %}
+          <li class="list-group-item">
+            <a href="#" class="label label-danger pull-right">delete</a>
+            <strong>{{ public_key.name }}</strong>
+            <small class="gray-light" title="SHA1 of your public key">({{ public_key.sha1sum }})</small>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
+<script>
+$('#nav-ssh').addClass('active');
+$('#id_public-key-name').keydown(function () {
+  var value = this.value;
+  this.value = value.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
+});
+</script>
+
 
 {% endblock %}

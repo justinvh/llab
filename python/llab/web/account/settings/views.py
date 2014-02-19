@@ -25,7 +25,7 @@ def settings_ssh(request):
     form = PublicKeyForm(post_data, prefix='public-key')
     if post_data and form.is_valid():
         form.save(user=request.user)
-        return redirect('settings:ssh')
+        return redirect('account:settings:ssh')
     template = 'settings/ssh.html'
     context = {'form': form, 'keys': request.user.public_keys.all()}
     return render(request, template, context)
