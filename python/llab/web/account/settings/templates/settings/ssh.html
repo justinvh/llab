@@ -13,44 +13,64 @@
   <div class="col-md-8 center-block soft-border">
     <div class="row">
       <div class="col-md-12">
-        <h2>New Key</h2>
-        <p>How about a quick guide?
-          <code>
-            $ ssh-keygen &amp;&amp; cat $HOME/.ssh/id_rsa.pub
-          </code>
-        </p>
-        <form method="post" class="form" action="{% url 'account:settings:ssh' %}">
-          {% csrf_token %}
+        <br>
+        <div class="col-md-12">
+          <ul class="nav nav-tabs">
+            {% if user.public_keys.exists %}
+            <li class="active"><a href="#registered-keys" data-toggle="tab">Registered Keys</a></li>
+            {% endif %}
+            <li><a href="#new-key" data-toggle="tab">New Key</a></li>
+          </ul>
 
-          {% bootstrap_form form %} {% buttons %}
+          <div class="tab-content">
+            {% if user.public_keys.exists %}
+            <div class="tab-pane active" id="registered-keys">
+              <div class="row">
+                <div class="col-md-12">
+                  <h3>Your Registered Keys</h3>
+                  <p>These are the keys that you have created. The text in the parenthesis
+                    is the sha1sum of your public key. You may delete existing public
+                    keys, but you can not modify them once created.</p>
+                  <ul class="list-group">
+                    {% for public_key in user.public_keys.all %}
+                    <li class="list-group-item">
+                      <a href="#" class="label label-danger pull-right">delete</a>
+                      <strong>{{ public_key.name }}</strong>
+                      <small class="gray-light" title="SHA1 of your public key">({{ public_key.sha1sum }})</small>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            <div class="tab-pane" id="new-key">
+              <div class="row">
+                <div class="col-md-12">
+                  <h3>Adding a New Key</h3>
+                  <p>How about a quick guide?
+                    <code>
+                      $ ssh-keygen &amp;&amp; cat $HOME/.ssh/id_rsa.pub
+                    </code>
+                  </p>
+                  <form method="post" class="form" action="{% url 'account:settings:ssh' %}">
+                    {% csrf_token %}
 
-          <button type="submit" class="btn btn-primary">
-            {% bootstrap_icon "log-in" %} Add Key
-          </button>
-          {% endbuttons %}
-        </form>
+                    {% bootstrap_form form %} {% buttons %}
+
+                    <button type="submit" class="btn btn-primary">
+                      {% bootstrap_icon "log-in" %} Add Key
+                    </button>
+                    {% endbuttons %}
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    {% if user.public_keys.exists %}
-    <hr>
-    <div class="row">
-      <div class="col-md-12">
-        <h2>Registered Keys</h2>
-        <ul class="list-group">
-          {% for public_key in user.public_keys.all %}
-          <li class="list-group-item">
-            <a href="#" class="label label-danger pull-right">delete</a>
-            <strong>{{ public_key.name }}</strong>
-            <small class="gray-light" title="SHA1 of your public key">({{ public_key.sha1sum }})</small>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    {% endif %}
   </div>
-</div>
 <script>
 $('#nav-ssh').addClass('active');
 $('#id_public-key-name').keydown(function () {
