@@ -10,7 +10,7 @@ class PublicKeyForm(forms.ModelForm):
 
     def save(self, user=None, commit=True):
         public_key = super(PublicKeyForm, self).save(commit=False)
-        public_key.key = self.cleaned_data['_key']
+        public_key.key = self.cleaned_data['_key'].strip()
         public_key.user = user if user else public_key.user
         if commit:
             public_key.save()

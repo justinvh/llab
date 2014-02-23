@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import sys
+import base64
+from llab.web.account.settings.models import PublicKey
+from llab.utils import cipher
+
+
+SSH_DISABLE = ('no-port-forwarding,'
+               'no-x11-forwarding,'
+               'no-pty,'
+               'no-agent-forwarding')
+
+
+SSH_COMMAND = 'command="./env.bash {}" {} {}'
+
+
+try:
+    public_key_raw = sys.stdin.readlines()[0]
+    public_key_raw = PublicKey.prepare_key(public_key_raw)
+    public_key, sha1sum = cipher.encrypt(public_key_raw)
+    key = PublicKey.objects.get(_key=public_key, sha1sum=sha1sum)
+    print(SSH_COMMAND.format(key.user_id, SSH_DISABLE, key.key))
+    sys.exit(0)
+except PublicKey.DoesNotExist:
+    sys.exit(1)

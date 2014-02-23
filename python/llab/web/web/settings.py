@@ -30,6 +30,10 @@ elif not SECRET_KEY_PRODUCTION:
 else:
     SECRET_KEY = SECRET_KEY_PRODUCTION
 
+
+#SSH_KEY_MANAGEMENT_BACKEND =  'llab.auth.openssh_database_backend'
+SSH_KEY_MANAGEMENT_BACKEND =  'llab.auth.openssh_copyid_backend'
+
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []

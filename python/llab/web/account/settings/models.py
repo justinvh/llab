@@ -67,7 +67,7 @@ class EmailAccount(models.Model):
 class PublicKey(models.Model):
     name = models.SlugField()
     created = models.DateTimeField(auto_now_add=True)
-    _key = PublicKeyField(verbose_name=_('Key'))
+    _key = PublicKeyField(verbose_name=_('Key'), db_index=True)
     sha1sum = models.CharField(max_length=60)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              related_name='public_keys')
@@ -78,7 +78,16 @@ class PublicKey(models.Model):
 
     @key.setter
     def key(self, value):
+        value = PublicKey.prepare_key(value)
         self._key = self.encrypt(value)
+
+    @classmethod
+    def prepare_key(cls, value):
+        lines = value.strip().split("\n")
+        lines = (" ".join(line.strip().split()) for line in lines)
+        value = "\n".join(line for line in lines if line)
+        value = ' '.join(value.split(' ')[:2])
+        return value
 
     def decrypt(self):
         from llab.utils import cipher
@@ -87,6 +96,7 @@ class PublicKey(models.Model):
     def encrypt(self, key):
         from llab.utils import cipher
         encrypt, sha1sum = cipher.encrypt(key, password='')
+        self._key = encrypt
         self.sha1sum = sha1sum
         return encrypt
 
@@ -106,3 +116,9 @@ class PublicKey(models.Model):
         template = 'settings/activity-feed/public-key-new.html'
         context = {'user': user, 'public_key': self}
         notify_users(user, template, context)
+
+        # Now use the registered SSH backend for installing the
+        # public key for this user.
+        module = settings.SSH_KEY_MANAGEMENT_BACKEND
+        mod =  __import__(module, globals(), locals(), ['run'], -1)
+        mod.run(self)

@@ -6,39 +6,25 @@ from django.utils.translation import ugettext as _
 
 class PublicKeyField(TextField):
     def validate(self, value, model_instance):
-        """
-        Confirm that each row is a valid ssh key
-        """
-        def _validate_key(value):
-            """
-            Just confirm that the first field is something like ssh-rsa or
-            ssh-dss, and the second field is reasonably long and can be
-            base64 decoded.
-            """
-            if value.strip() == "":
-                return True
-            try:
-                type_, key_string = value.split()[:2]
-                assert (type_[:4] == 'ssh-')
-                assert (len(key_string) > 100)
-                base64.decodestring(key_string)
-                return True
-            except:
-                False
-
         super(PublicKeyField, self).validate(value, model_instance)
+
+        # Ensure that only one key is available
         keys = value.rstrip().split("\n")
-        l = len(keys)
-        i = 0
-        for s in value.split("\n"):
-            i += 1
-            if not _validate_key(s):
-                if l == 1:
-                    message = _("This does not appear to be an ssh public key")
-                else:
-                    message = _("Row {} does not appear"
-                                " to be an ssh public key").format(i)
-                raise exceptions.ValidationError(message)
+        if len(keys) > 1:
+            message = _('Only one key is allowed per instance')
+            raise exceptions.ValidationError(message)
+
+        # Validate the key
+        try:
+            value = keys[0]
+            type_, key_string = value.split()[:2]
+            assert (type_[:4] == 'ssh-')
+            assert (len(key_string) > 100)
+            base64.decodestring(key_string)
+            return True
+        except:
+            message = _("This does not appear to be an ssh public key")
+            raise exceptions.ValidationError(message)
 
     def clean(self, value, model_instance):
         """
@@ -47,4 +33,5 @@ class PublicKeyField(TextField):
         lines = value.strip().split("\n")
         lines = (" ".join(line.strip().split()) for line in lines)
         value = "\n".join(line for line in lines if line)
+        value = ' '.join(value.split(' ')[:2])
         return super(PublicKeyField, self).clean(value, model_instance)
