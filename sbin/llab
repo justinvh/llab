@@ -15,6 +15,11 @@ parser.add_argument('--ssh', help='True if over SSH', action='store_true')
 
 # Construct the pre-receive parser
 pre_receive_parser = subparsers.add_parser(
+    'git-upload-pack', help='Clone or Upload Hook Command Line Tools')
+
+
+# Construct the pre-receive parser
+pre_receive_parser = subparsers.add_parser(
     'git-receive-pack', help='Pre-receive Hook Command Line Tools')
 
 # Construct the post-receive parser
@@ -35,3 +40,6 @@ handoff_args = ['--user', str(args.user)] + remaining_args
 
 if args.command == 'git-receive-pack':
     subprocess.call(['llab-receive-pack'] + handoff_args)
+
+elif args.command == 'git-upload-pack':
+    subprocess.call(['llab-upload-pack'] + handoff_args)

@@ -29,14 +29,14 @@ def parse_args(args):
         if not user_id or not project_path:
             sys.exit('--project and --verify are required for this command')
         project, user = ssh_user.authenticate(user_id, project_path)
-        os.execvp('git-receive-pack', ['', project.get_absolute_path()])
+        os.execvp('git-upload-pack', ['', project.get_absolute_path()])
 
     sys.exit("false")
 
 
 if __name__ == '__main__':
     try:
-        parser = argparse.ArgumentParser(description='llab pre-receive tool')
+        parser = argparse.ArgumentParser(description='llab upload-receive tool')
         build_parser(parser)
         parse_args(parser.parse_args())
     except ssh_user.AuthenticationError as e:
