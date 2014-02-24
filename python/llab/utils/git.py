@@ -1,5 +1,8 @@
 import os
 import dulwich.repo
+from dulwich.index import Index
+
+from itertools import izip
 
 
 class Git(object):
@@ -32,6 +35,18 @@ class Git(object):
             branch = 'refs/heads/' + branch
             refs[branch] = repo[branch]
         return client.send_pack(path, update_refs, pack_contents)
+
+    def lstree(self, commit=None, with_commit=True):
+        store = self.repo.object_store
+        commit = commit or self.repo.head()
+        repo = self.repo
+        tree = repo[commit].tree
+        index = Index(self.repo.index_path())
+        changes = index.changes_from_tree(store, tree, want_unchanged=True)
+        for path, mode, sha in changes:
+            new_path = path[1]
+            if new_path:
+                yield new_path
 
     @classmethod
     def clone_or_create(cls, path, clone=None):
