@@ -23,6 +23,21 @@ class User(AbstractUser):
     def gravatar(self):
         return self.profile.gravatar or self.email
 
+    @classmethod
+    def from_commit(cls, name_email, project=None):
+        start = name_email.rfind('<')
+        full_name = name_email[:start]
+        email = name_email[start + 1:-1]
+
+        # Additional filtering
+        user = User.objects.filter(email=email)
+        if project:
+            user = user.filter(project=project)
+        if user:
+            user = user[0]
+
+        return user, full_name, email
+
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         super(User, self).save(*args, **kwargs)

@@ -195,11 +195,11 @@ class Project(models.Model):
 
 
 class Branch(models.Model):
-    branch = models.CharField(max_length=256, db_index=True)
+    name = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='branches')
 
     def __unicode__(self):
-        return u'{}/{}'.format(self.project, self.branch)
+        return u'{}/{}'.format(self.project, self.name)
 
 
 class Commit(models.Model):
@@ -219,9 +219,7 @@ class Commit(models.Model):
     message = models.TextField()
 
     # The diffs of the commit
-    files_added = JSONField()
-    files_modified = JSONField()
-    files_deleted = JSONField()
+    diff = JSONField()
 
     # The current tree as of this commit
     tree = JSONField()
@@ -237,8 +235,43 @@ class Commit(models.Model):
     def create_from_sha(project, old_rev, new_rev, refname):
         from account.models import User
         new_rev_commit = project.git.commit(new_rev)
-        old_rev_commit = project.git.commit(old_rev)
+
+        # Extract the project tree and diffs
         tree = project.git.revtree(sha=new_rev)
+        diff = project.git.difflist(old_rev, new_rev)
+
+        # Extract formatted author details
+        new_author = new_rev_commit.author
+        author_info = User.from_commit(new_author)
+        author, author_name, author_email = author_info
+
+        # Extract formatted committer details
+        new_committer = new_rev_commit.committer
+        committer_info = User.from_commit(new_committer)
+        committer, committer_name, committer_email = committer_info
+
+        # Branch fetching
+        branch = Branch.objects.get_or_create(project=project, name=refname)
+
+        # The actual Commit object is fairly heavy
+        return Commit.objects.create(
+            commit_time=new_rev_commit.commit_time,
+            commit_timezone=new_rev_commit.commit_timezone,
+            sha1sum=new_rev_commit.sha().hexdigest,
+            author=author,
+            author_name=author_name,
+            author_email=author_email,
+            author_timezone=new_rev_commit.author_timezone,
+            author_time=new_rev_commit.author_time,
+            committer=committer,
+            committer_name=committer_name,
+            committer_email=committer_email,
+            message=new_rev_commit.message,
+            diff=diff,
+            tree=tree,
+            branch=branch,
+            project=project)
+
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.sha1sum_short(), self.project)
@@ -255,9 +288,9 @@ class CommitComment(models.Model):
 
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=256, db_index=True)
+    name = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='tags')
     commit = models.ForeignKey(Commit)
 
     def __unicode__(self):
-        return u'{}/{}'.format(self.project, self.tag)
+        return u'{}/{}'.format(self.project, self.name)
