@@ -1,0 +1,9 @@
+{% load gravatar %}
+
+<a class="pull-left" href="#">
+    {% gravatar pushed_by.email 64 g %}
+</a>
+<div class="media-body">
+  <h4 class="media-heading"><a href="#">{{ pushed_by.username }}</a> pushed to <a href="#">{{ branch }}</a> at <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a></h4>
+  <p><a href="#">{{ new_rev_short }}</a></p>
+</div>

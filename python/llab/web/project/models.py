@@ -1,5 +1,7 @@
 import os
 
+import django.dispatch
+
 from django.db import models, transaction
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
@@ -13,6 +15,27 @@ from organization.models import Organization
 
 
 class Project(models.Model):
+    # Dispatch signals
+    branch_new_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'branch', 'pushed_by', 'project'])
+    branch_modify_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'branch', 'pushed_by', 'project'])
+    branch_delete_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'branch', 'pushed_by', 'project'])
+    tag_new_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'tag', 'pushed_by', 'project'])
+    tag_modify_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'tag', 'pushed_by', 'project'])
+    tag_delete_signal = django.dispatch.Signal(
+        providing_args=['new_rev', 'old_rev', 'new_rev_short',
+                        'tag', 'pushed_by', 'project'])
+
+    # Fields
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               related_name='projects')
     organization = models.ForeignKey(Organization, null=True)
@@ -117,6 +140,45 @@ class Project(models.Model):
         if self.organization:
             owner = self.organization.name
         return os.path.join(owner, self.name)
+
+    def notifiable_users(self):
+        users = (self.owner,)
+        if self.organization:
+            users = (role.user for role in self.organization.roles)
+        return users
+
+    def post_receive(self, old_rev, new_rev, refname, name, push_user):
+        # Determine if we are operating on a branch or tag
+        klass = 'branch'
+        if 'refs/tags' in refname:
+            klass = 'tag'
+
+        # Determine the action on the tag or branch
+        action = 'modify'
+        empty_old_rev = '00000000'
+        if old_rev.startswith(empty_old_rev):
+            action = 'new'
+        elif new_rev.startswith(empty_old_rev):
+            action = 'delete'
+
+        # Create the context
+        context = {'old_rev': old_rev,
+                   'new_rev': new_rev,
+                   'new_rev_short': new_rev[:8],
+                   'refname': refname,
+                   'pushed_by': push_user,
+                   'project': self,
+                   klass: name}
+
+        # Dispatch the action
+        return self.post_receive_action(klass, action, **context)
+
+    def post_receive_action(self, klass, action, *args, **kwargs):
+        template = 'project/activity-feed/{}-{}.html'.format(klass, action)
+        cmd = '{}_{}_signal'.format(klass, action)
+        users = self.notifiable_users()
+        notify_users(users, template, kwargs)
+        getattr(Project, cmd).send(sender=self, **kwargs)
 
     def __unicode__(self):
         return self.full_name()
