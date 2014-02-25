@@ -32,7 +32,7 @@ else:
 
 
 #SSH_KEY_MANAGEMENT_BACKEND =  'llab.auth.openssh_database_backend'
-SSH_KEY_MANAGEMENT_BACKEND =  'llab.auth.openssh_copyid_backend'
+SSH_KEY_MANAGEMENT_BACKEND = 'llab.auth.openssh_copyid_backend'
 
 TEMPLATE_DEBUG = True
 
@@ -62,6 +62,9 @@ INSTALLED_APPS = (
     'django_gravatar',
     'bootstrap3',
     'user_streams',
+    'json_field',
+
+    # Django contribs
     'django.contrib.humanize'
 )
 

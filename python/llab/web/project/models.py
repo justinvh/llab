@@ -13,6 +13,8 @@ from llab.utils.request import notify_users
 
 from organization.models import Organization
 
+from json_field import JSONField
+
 
 class Project(models.Model):
     # Dispatch signals
@@ -173,6 +175,9 @@ class Project(models.Model):
         # Dispatch the action
         return self.post_receive_action(klass, action, **context)
 
+    def post_receive_commit(self, commit):
+        return Commit.create_from_dulwich(self, commit)
+
     def post_receive_action(self, klass, action, *args, **kwargs):
         template = 'project/activity-feed/{}-{}.html'.format(klass, action)
         cmd = '{}_{}_signal'.format(klass, action)
@@ -182,3 +187,46 @@ class Project(models.Model):
 
     def __unicode__(self):
         return self.full_name()
+
+
+class Branch(models.Model):
+    branch = models.CharField(max_length=256, db_index=True)
+    project = models.ForeignKey(Project, related_name='branches')
+
+    def __unicode__(self):
+        return u'{}/{}'.format(self.project, self.branch)
+
+
+class Commit(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
+    author_time = models.DateTimeField()
+    author_name = models.CharField(max_length=256)
+    author_email = models.EmailField()
+    sha1sum = models.CharField(max_length=60, db_index=True)
+    commit = models.TextField()
+    files_added = JSONField()
+    files_modified = JSONField()
+    files_deleted = JSONField()
+    tree = JSONField()
+    branch = models.ForeignKey(Branch, related_name='commits')
+    project = models.ForeignKey(Project, related_name='commits')
+
+    def sha1sum_short(self):
+        return self.sha1sum[:8]
+
+    @staticmethod
+    def create_from_dulwich(project, commit):
+        pass
+
+    def __unicode__(self):
+        return u'{} @ {}'.format(self.sha1sum_short(), self.project)
+
+
+class Tag(models.Model):
+    tag = models.CharField(max_length=256, db_index=True)
+    project = models.ForeignKey(Project, related_name='tags')
+    commit = models.ForeignKey(Commit)
+
+    def __unicode__(self):
+        return u'{}/{}'.format(self.project, self.tag)
