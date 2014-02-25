@@ -199,6 +199,7 @@ class Branch(models.Model):
 
 class Commit(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    parents = models.ManyToManyField('Commit', related_name='+')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
     author_time = models.DateTimeField()
     author_name = models.CharField(max_length=256)
