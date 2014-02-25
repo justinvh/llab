@@ -224,6 +224,13 @@ class Commit(models.Model):
         return u'{} @ {}'.format(self.sha1sum_short(), self.project)
 
 
+class CommitComment(models.Model):
+    commit = models.ForeignKey(Commit, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL,
+                               related_name='commit_comments')
+    comment = models.TextField()
+
+
 class Tag(models.Model):
     tag = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='tags')
