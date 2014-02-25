@@ -230,6 +230,9 @@ class CommitComment(models.Model):
                                related_name='commit_comments')
     comment = models.TextField()
 
+    def __unicode__(self):
+        return u'{} -- {}'.format(self.commit.commit, self.comment[:24])
+
 
 class Tag(models.Model):
     tag = models.CharField(max_length=256, db_index=True)
