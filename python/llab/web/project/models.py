@@ -8,7 +8,7 @@ from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
 
 from django.conf import settings
-from llab.utils.git import Git
+from llab.utils.git import Git, commit_as_dict
 from llab.utils.request import notify_users
 
 from organization.models import Organization
@@ -172,11 +172,16 @@ class Project(models.Model):
                    'project': self,
                    klass: name}
 
+        # Create the commit
+        if klass == 'branch':
+            self.post_receive_commit(old_rev, new_rev, refname)
+
         # Dispatch the action
         return self.post_receive_action(klass, action, **context)
 
-    def post_receive_commit(self, commit):
-        return Commit.create_from_dulwich(self, commit)
+    def post_receive_commit(self, old_rev, new_rev, refname):
+        proj = self
+        return Commit.create_from_sha(proj, old_rev, new_rev, refname)
 
     def post_receive_action(self, klass, action, *args, **kwargs):
         template = 'project/activity-feed/{}-{}.html'.format(klass, action)
@@ -199,17 +204,29 @@ class Branch(models.Model):
 
 class Commit(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    parents = models.ManyToManyField('Commit', related_name='+')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
-    author_time = models.DateTimeField()
-    author_name = models.CharField(max_length=256)
-    author_email = models.EmailField()
+    commit_time = models.DateTimeField()
+    commit_timezone = models.CharField(max_length=64)
     sha1sum = models.CharField(max_length=60, db_index=True)
-    commit = models.TextField()
+    parents = models.ManyToManyField('Commit', related_name='+')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
+    author_email = models.EmailField()
+    author_name = models.CharField(max_length=256)
+    author_time = models.DateTimeField()
+    author_timezone = models.CharField(max_length=64)
+    committer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
+    committer_name = models.CharField(max_length=256)
+    committer_email = models.EmailField()
+    message = models.TextField()
+
+    # The diffs of the commit
     files_added = JSONField()
     files_modified = JSONField()
     files_deleted = JSONField()
+
+    # The current tree as of this commit
     tree = JSONField()
+
+    # The related branch and project for this commit
     branch = models.ForeignKey(Branch, related_name='commits')
     project = models.ForeignKey(Project, related_name='commits')
 
@@ -217,8 +234,11 @@ class Commit(models.Model):
         return self.sha1sum[:8]
 
     @staticmethod
-    def create_from_dulwich(project, commit):
-        pass
+    def create_from_sha(project, old_rev, new_rev, refname):
+        from account.models import User
+        new_rev_commit = project.git.commit(new_rev)
+        old_rev_commit = project.git.commit(old_rev)
+        tree = project.git.revtree(sha=new_rev)
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.sha1sum_short(), self.project)
