@@ -1,8 +1,48 @@
 import os
 import dulwich.repo
 from dulwich.index import Index
+from dulwich import diff_tree
+from dulwich.objects import S_ISGITLINK
+from difflib import SequenceMatcher
 
 from itertools import izip
+
+
+def commit_as_dict(commit):
+    return {'author': commit.author,
+            'author_time': commit.author_time,
+            'author_timezone': commit.author_timezone,
+            'commit_time': commit.commit_time,
+            'commit_timezone': commit.commit_timezone,
+            'committer': commit.committer,
+            'message': commit.message.split('\n')[0][:50],
+            'sha': commit.sha().hexdigest()}
+
+
+def unified_diff(a, b, n=3):
+    diff, added, deleted = [], [], []
+    for g in SequenceMatcher(None, a, b).get_grouped_opcodes(n):
+        i1, i2, j1, j2 = g[0][1], g[-1][2], g[0][3], g[-1][4]
+        for tag, i1, i2, j1, j2 in group:
+            if tag == 'equal':
+                for i, line in enumerate(a[i1:i2], start=i1):
+                    diff.append((i, ' ', line))
+                continue
+            if tag == 'replace' or tag == 'delete':
+                for i, line in enumerate(a[i1:i2], start=i1):
+                    if not line[-1] == '\n':
+                        line += '\n\\ No newline at end of file\n'
+                    entry = (i, '-', line)
+                    diff.append(entry)
+                    deleted += 1
+            if tag == 'replace' or tag == 'insert':
+                for i, line in enumerate(b[j1:j2], start=j1):
+                    if not line[-1] == '\n':
+                        line += '\n\\ No newline at end of file\n'
+                    entry = (i, '+', line)
+                    diff.append(entry)
+                    added += 1
+    return diff, added, deleted
 
 
 class Git(object):
@@ -36,17 +76,137 @@ class Git(object):
             refs[branch] = repo[branch]
         return client.send_pack(path, update_refs, pack_contents)
 
-    def lstree(self, commit=None, with_commit=True):
+    def lstree(self, sha=None):
         store = self.repo.object_store
-        commit = commit or self.repo.head()
+        sha = sha or self.repo.head()
         repo = self.repo
-        tree = repo[commit].tree
+        tree = repo[sha].tree
         index = Index(self.repo.index_path())
         changes = index.changes_from_tree(store, tree, want_unchanged=True)
         for path, mode, sha in changes:
             new_path = path[1]
             if new_path:
-                yield new_path
+                yield ((path[0], mode[0], sha[0]),
+                       (path[1], mode[1], sha[1]))
+
+    def commit_for_file(self, filename, sha=None):
+        r = self.repo
+        sha = sha or r.head()
+        walker = r.get_walker(paths=[filename], include=[sha], max_entries=1)
+        for w in walker:
+            return w.commit
+        return None
+
+    def revtree(self, sha=None):
+        # We need to first traverse the tree and construct a state that
+        # we can render to the end-user. This tree will be stored as a
+        # JSON object on the commit message
+        tree = {}
+        seen = set()
+        sha = sha or self.repo.head()
+        for walker in self.repo.get_walker(include=[sha]):
+            commit = commit_as_dict(walker.commit)
+            for change in walker.changes():
+                path = change.new.path
+                if not path:
+                    seen.add(change.old.path)
+                    continue
+
+                if path in seen:
+                    continue
+
+                seen.add(path)
+                parts = path.split(os.sep)
+
+                # Construct a top-level descriptor
+                if len(parts) == 1:
+                    tree[parts[0]] = commit
+                    continue
+
+                # Construct a tree with all the parts
+                rel_tree = tree
+                for part in parts[:-1]:
+                    if not rel_tree.get(part):
+                        rel_tree[part] = {}
+                    rel_tree = rel_tree[part]
+
+                rel_tree[parts[-1]] = commit
+
+        return tree
+
+    def difflist(self, old_rev, new_rev):
+        r = self.repo
+        store = r.store
+        old_tree, new_tree = r[old_rev].tree, r[new_rev].tree
+        changes = store.tree_changes(old_tree, new_tree)
+
+        def shortid(hexsha):
+            if hexsha is None:
+                return '0' * 7
+            return hexsha[:7]
+
+        def content(mode, hexsha):
+            if hexsha is None:
+                return '['
+            elif S_ISGITLINK(mode):
+                return 'Submodule commit {}\n'.format(hexsha)
+            else:
+                return store[hexsha].data
+
+        def lines(content):
+            if not content:
+                return []
+            else:
+                return content.splitlines(True)
+
+
+        tree = {'stats': {'files_added': 0,
+                          'files_deleted': 0,
+                          'lines_added': 0,
+                          'lines_deleted': 0},
+                'changes': []}
+
+        for path, mode, sha in changes:
+            old_path, old_mode, old_sha = path[0], mode[0], sha[0]
+            new_path, new_mode, new_sha = path[1], mode[1], sha[1]
+
+            if not old_path:
+                old_path = '/dev/null'
+
+            if not new_path:
+                new_path = '/dev/null'
+
+            # Construct our object entry
+            entry = {'old_path': old_path,
+                     'new_path': new_path,
+                     'old_mode': old_mode,
+                     'new_mode': new_mode,
+                     'lines_added': 0,
+                     'lines_deleted': 0,
+                     'diff': []}
+
+            # Fetch all of the content
+            old_content = content(old_mode, old_sha)
+            old_lines = lines(old_lines)
+            new_content = content(new_mode, new_sha)
+            new_lines = lines(new_lines)
+
+            # Diff the file for changes
+            diff, added, deleted = unified_diff(old_lines, new_lines)
+            entry['diff'] = diff
+            entry['lines_added'] += added
+            entry['lines_deleted'] += deleted
+
+            # Aggregate statistics
+            tree['stats']['lines_added'] += entry['lines_added']
+            tree['stats']['lines_deleted'] += entry['lines_deleted']
+            tree['changes'].append(entry)
+
+        return tree
+
+
+    def commit(self, old_rev):
+        return self.repo[old_rev]
 
     @classmethod
     def clone_or_create(cls, path, clone=None):
