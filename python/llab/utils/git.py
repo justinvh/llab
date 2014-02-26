@@ -216,12 +216,34 @@ class Git(object):
         the clone path as a bare repository.
 
         """
+        path = os.path.abspath(path)
         if not os.path.exists(path):
             os.makedirs(path)
+
+        # Clone the data and the copy the hooks
         if not clone:
-            return cls.from_repo(dulwich.repo.Repo.init_bare(path))
-        clone_repo = dulwich.repo.Repo(clone)
-        return cls.from_repo(clone_repo.clone(target_path=path, bare=True))
+            inst = cls.from_repo(dulwich.repo.Repo.init_bare(path))
+        else:
+            clone_repo = dulwich.repo.Repo(clone)
+            inst = cls.from_repo(clone_repo.clone(target_path=path, bare=True))
+        inst.refresh_hooks()
+        return inst
+
+    def refresh_hooks(self):
+        import shutil
+        path = self.repo.path
+        repo_hooks = os.path.join(path, 'hooks')
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        hooks = os.path.join(module_dir, 'hooks')
+        hooks_added = []
+        for fn in os.listdir(hooks):
+            a = os.path.join(hooks, fn)
+            b = os.path.join(repo_hooks, fn)
+            if not os.path.isfile(a):
+                continue
+            hooks_added.append(b)
+            shutil.copy2(a, b)
+        return hooks
 
     @classmethod
     def from_repo(cls, repo):
