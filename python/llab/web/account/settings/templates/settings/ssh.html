@@ -17,7 +17,10 @@
         <br>
         <div class="col-md-12">
           <ul class="nav nav-tabs">
-            {% if user.public_keys.exists %}
+            {% if user.public_keys.exists and form.errors %}
+            <li><a href="#registered-keys" data-toggle="tab">Registered Keys</a></li>
+            <li class="active"><a href="#new-key" data-toggle="tab">New Key</a></li>
+            {% elif user.public_keys.exists %}
             <li class="active"><a href="#registered-keys" data-toggle="tab">Registered Keys</a></li>
             <li><a href="#new-key" data-toggle="tab">New Key</a></li>
             {% else %}
@@ -27,7 +30,12 @@
 
           <div class="tab-content">
             {% if user.public_keys.exists %}
+
+            {% if form.errors %}
+            <div class="tab-pane" id="registered-keys">
+            {% else %}
             <div class="tab-pane active" id="registered-keys">
+            {% endif %}
               <div class="row">
                 <div class="col-md-12">
                   <h3>Your Registered Keys</h3>
@@ -64,12 +72,11 @@
             </div>
             {% endif %}
 
-            {% if user.public_keys.exists %}
-            <div class="tab-pane" id="new-key">
-            {% else %}
+            {% if form.errors or not user.public_keys.exists %}
             <div class="tab-pane active" id="new-key">
+            {% else %}
+            <div class="tab-pane" id="new-key">
             {% endif %}
-
               <div class="row">
                 <div class="col-md-12">
                   <h3>Adding a New Key</h3>

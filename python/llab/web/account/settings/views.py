@@ -23,7 +23,7 @@ def settings_profile(request):
 @login_required
 def settings_ssh(request):
     post_data = post_or_none(request)
-    form = PublicKeyForm(post_data, prefix='public-key')
+    form = PublicKeyForm(request.user, post_data, prefix='public-key')
     if post_data and form.is_valid():
         form.save(user=request.user)
         return redirect('account:settings:ssh')

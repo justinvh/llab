@@ -77,6 +77,9 @@ class PublicKey(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              related_name='public_keys')
 
+    class Meta:
+        unique_together = ('user', 'name')
+
     @property
     def key(self):
         return self.decrypt()
