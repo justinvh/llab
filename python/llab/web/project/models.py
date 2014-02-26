@@ -166,7 +166,7 @@ class Project(models.Model):
         # Create the context
         context = {'old_rev': old_rev,
                    'new_rev': new_rev,
-                   'new_rev_short': new_rev[:8],
+                   'new_rev_short': new_rev[:7],
                    'refname': refname,
                    'pushed_by': push_user,
                    'project': self,
@@ -229,7 +229,7 @@ class Commit(models.Model):
     project = models.ForeignKey(Project, related_name='commits')
 
     def sha1sum_short(self):
-        return self.sha1sum[:8]
+        return self.sha1sum[:7]
 
     @staticmethod
     def create_from_sha(project, old_rev, new_rev, refname):
@@ -271,7 +271,6 @@ class Commit(models.Model):
             tree=tree,
             branch=branch,
             project=project)
-
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.sha1sum_short(), self.project)
