@@ -12,6 +12,11 @@ from llab.utils.request import notify_users
 Notification = make_bitwise_enumeration('Notification', ('email', 'web'))
 
 
+# This is the key manager--or the gate-keeper
+module = settings.SSH_KEY_MANAGEMENT_BACKEND
+ssh_manager =  __import__(module, globals(), locals(), ['run', 'delete'], -1)
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User)
     name = models.CharField(max_length=255, blank=True)
@@ -108,6 +113,9 @@ class PublicKey(models.Model):
         notify_users(user, template, context)
         super(PublicKey, self).delete(*args, **kwargs)
 
+        # Remove the key from the backend
+        ssh_manager.delete(self)
+
     def save(self, *args, **kwargs):
         super(PublicKey, self).save(*args, **kwargs)
 
@@ -119,6 +127,4 @@ class PublicKey(models.Model):
 
         # Now use the registered SSH backend for installing the
         # public key for this user.
-        module = settings.SSH_KEY_MANAGEMENT_BACKEND
-        mod =  __import__(module, globals(), locals(), ['run'], -1)
-        mod.run(self)
+        ssh_manager.run(self)
