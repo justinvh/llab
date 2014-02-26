@@ -208,12 +208,14 @@ class Commit(models.Model):
     commit_timezone = models.CharField(max_length=64)
     sha1sum = models.CharField(max_length=60, db_index=True)
     parents = models.ManyToManyField('Commit', related_name='+')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                               related_name='author_for_committs')
     author_email = models.EmailField()
     author_name = models.CharField(max_length=256)
     author_time = models.DateTimeField()
     author_timezone = models.CharField(max_length=64)
-    committer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
+    committer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                                  related_name='committed_for_commits')
     committer_name = models.CharField(max_length=256)
     committer_email = models.EmailField()
     message = models.TextField()
