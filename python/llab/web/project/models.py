@@ -1,4 +1,7 @@
 import os
+import datetime
+
+import pytz
 
 import django.dispatch
 
@@ -253,18 +256,21 @@ class Commit(models.Model):
         committer, committer_name, committer_email = committer_info
 
         # Branch fetching
-        branch = Branch.objects.get_or_create(project=project, name=refname)
+        _, branch = Branch.objects.get_or_create(project=project, name=refname)
+        fts = datetime.datetime.fromtimestamp
+        atz = pytz.timezone(new_rev_commit.author_timezone)
+        ctz = pytz.timezone(new_rev_commit.commit_timezone)
 
         # The actual Commit object is fairly heavy
         return Commit.objects.create(
-            commit_time=new_rev_commit.commit_time,
+            commit_time=ctz(fts(new_rev_commit.commit_time)),
             commit_timezone=new_rev_commit.commit_timezone,
             sha1sum=new_rev_commit.sha().hexdigest,
             author=author,
             author_name=author_name,
             author_email=author_email,
             author_timezone=new_rev_commit.author_timezone,
-            author_time=new_rev_commit.author_time,
+            author_time=atz(fts(new_rev_commit.author_time)),
             committer=committer,
             committer_name=committer_name,
             committer_email=committer_email,
