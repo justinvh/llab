@@ -136,7 +136,7 @@ class Git(object):
 
     def difflist(self, old_rev, new_rev):
         r = self.repo
-        store = r.store
+        store = r.object_store
         old_tree, new_tree = r[old_rev].tree, r[new_rev].tree
         changes = store.tree_changes(old_tree, new_tree)
 
