@@ -208,7 +208,6 @@ class Branch(models.Model):
 class Commit(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     commit_time = models.DateTimeField()
-    commit_timezone = models.CharField(max_length=64)
     sha1sum = models.CharField(max_length=60, db_index=True)
     parents = models.ManyToManyField('Commit', related_name='+')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
@@ -216,7 +215,6 @@ class Commit(models.Model):
     author_email = models.EmailField()
     author_name = models.CharField(max_length=256)
     author_time = models.DateTimeField()
-    author_timezone = models.CharField(max_length=64)
     committer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
                                   related_name='committed_for_commits')
     committer_name = models.CharField(max_length=256)
@@ -256,21 +254,26 @@ class Commit(models.Model):
         committer, committer_name, committer_email = committer_info
 
         # Branch fetching
-        _, branch = Branch.objects.get_or_create(project=project, name=refname)
-        fts = datetime.datetime.fromtimestamp
-        atz = pytz.timezone(new_rev_commit.author_timezone)
-        ctz = pytz.timezone(new_rev_commit.commit_timezone)
+        branch, _ = Branch.objects.get_or_create(project=project, name=refname)
+        fts = datetime.datetime.utcfromtimestamp
+        utc = pytz.timezone('UTC')
+
+        author_time = new_rev_commit.author_time
+        author_time += new_rev_commit.author_timezone
+        author_time = utc.localize(fts(author_time))
+
+        commit_time = new_rev_commit.commit_time
+        commit_time += new_rev_commit.commit_timezone
+        commit_time = utc.localize(fts(commit_time))
 
         # The actual Commit object is fairly heavy
         return Commit.objects.create(
-            commit_time=ctz(fts(new_rev_commit.commit_time)),
-            commit_timezone=new_rev_commit.commit_timezone,
+            commit_time=commit_time,
             sha1sum=new_rev_commit.sha().hexdigest,
             author=author,
             author_name=author_name,
             author_email=author_email,
-            author_timezone=new_rev_commit.author_timezone,
-            author_time=atz(fts(new_rev_commit.author_time)),
+            author_time=author_time,
             committer=committer,
             committer_name=committer_name,
             committer_email=committer_email,
