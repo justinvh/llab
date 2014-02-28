@@ -3,6 +3,7 @@ import os
 import dulwich.repo
 
 from functools import partial
+from collections import OrderedDict
 
 from dulwich.index import Index
 from dulwich.objects import S_ISGITLINK
@@ -21,7 +22,7 @@ def commit_as_dict(commit):
 
 
 def unified_diff(a, b, n=3):
-    diff, added, deleted = [], [], []
+    diff, added, deleted = [], 0, 0
     for g in SequenceMatcher(None, a, b).get_grouped_opcodes(n):
         i1, i2, j1, j2 = g[0][1], g[-1][2], g[0][3], g[-1][4]
         for tag, i1, i2, j1, j2 in g:
@@ -109,6 +110,8 @@ class Git(object):
         seen = set()
         sha = sha or self.repo.head()
         for walker in self.repo.get_walker(include=[sha]):
+
+            # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
             for change in walker.changes():
                 path = change.new.path
@@ -124,19 +127,54 @@ class Git(object):
 
                 # Construct a top-level descriptor
                 if len(parts) == 1:
-                    tree[parts[0]] = commit
+                    tree[parts[0]] = {'commit': commit,
+                                      'type': 'file',
+                                      'tree': {}}
                     continue
 
                 # Construct a tree with all the parts
                 rel_tree = tree
                 for part in parts[:-1]:
                     if not rel_tree.get(part):
-                        rel_tree[part] = {}
-                    rel_tree = rel_tree[part]
+                        rel_tree[part] = {'commit': commit,
+                                          'type': 'folder',
+                                          'tree': {}}
+                    rel_tree = rel_tree[part]['tree']
 
-                rel_tree[parts[-1]] = commit
+                rel_tree[parts[-1]] = {'commit': commit,
+                                       'type': 'file',
+                                       'tree': {}}
 
-        return tree
+        # Now reorganize the tree so when we display it then the tree
+        # will display folder ABC -> files ABC
+        ordered_tree = OrderedDict()
+
+        def process_tree(tr):
+            stack, files, folders = [], [], []
+
+            # Iterate through the current tree object
+            for name, obj in tr.iteritems():
+                if obj['type'] == 'folder':
+                    folders.append((name, obj))
+                    stack.append(name)
+                else:
+                    files.append((name, obj))
+
+            # Construct the ordered parameters of the tree
+            for name, obj in sorted(folders):
+                ordered_tree[name] = obj
+
+            # Construct the ordered parameters of the tree
+            for name, obj in sorted(files):
+                ordered_tree[name] = obj
+
+            # Repeat the process for the new node
+            for item in stack:
+                process_tree(tr[item]['tree'])
+
+        process_tree(tree)
+
+        return ordered_tree
 
     def difflist(self, old_rev, new_rev):
         r = self.repo
