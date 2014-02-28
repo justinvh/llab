@@ -39,10 +39,16 @@ def project_new(request, owner=None, project=None):
 def project_view(request, owner, project):
     project = get_object_or_404(Project, name=project, owner__username=owner)
     context = {'project': project, 'owner': owner}
+
     if not project.commits.exists():
         return render(request, 'project/view-empty.html', context)
-    context['commit'] = project.commits.latest('id')
-    context['branch_count'] = project.branches.count()
-    context['commit_count'] = project.commits.count()
-    context['current_path'] = project.name
+
+    context.update({'commit': project.commits.latest('id'),
+                    'branch_count': project.branches.count(),
+                    'commit_count': project.commits.count(),
+                    'contributor_count': project.contributors.count(),
+                    'tag_count': project.tags.count(),
+                    'current_path': project.name,
+                    'user_is_admin': project.is_admin(request.user)})
+
     return render(request, 'project/view.html', context)

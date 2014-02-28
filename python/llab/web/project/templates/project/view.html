@@ -30,33 +30,59 @@
 
     <ul class="nav nav-tabs">
       <li class="active">
+        <a data-toggle="tab" href="#tab-source">
+          <span class="glyphicon glyphicon-book"></span>
+          <strong>Source</strong>
+        </a>
+      </li>
+
+      <li>
         <a data-toggle="tab" href="#tab-commits">
           <span class="glyphicon glyphicon-list"></span>
           <strong>{{ commit_count }}</strong> Commit{{ commit_count|pluralize }}
         </a>
       </li>
+
       <li>
         <a data-toggle="tab" href="#tab-branches">
           <span class="glyphicon glyphicon-tree-conifer"></span>
           <strong>{{ branch_count }}</strong> Branch{{ branch_count|pluralize:"es" }}
         </a>
       </li>
+
       <li>
-        <a data-toggle="tab" href="#tab-releases">
+        <a data-toggle="tab" href="#tab-tags">
           <span class="glyphicon glyphicon-calendar"></span>
-          Releases
+          <strong>{{ tag_count }}</strong> Tag{{ tag_count|pluralize }}
         </a>
       </li>
+
       <li>
         <a data-toggle="tab" href="#tab-contributors">
           <span class="glyphicon glyphicon-globe"></span>
-          Contributors
+          <strong>{{ contributor_count }}</strong> Contributor{{ contributor_count|pluralize }}
         </a>
       </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-issues">
+          <span class="glyphicon glyphicon-wrench"></span>
+          0 Issues
+        </a>
+      </li>
+
+      {% if user_is_admin %}
+      <li>
+        <a data-toggle="admin" href="#tab-issues">
+          <span class="glyphicon glyphicon-cog"></span>
+          Settings
+        </a>
+      </li>
+      {% endif %}
     </ul>
 
     <div class="tab-content">
-      <div class="tab-pane active" id="tab-commits">
+      <div class="tab-pane active" id="tab-source">
         <h4>
           <div class="btn-group">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
@@ -78,7 +104,7 @@
             <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.created|naturaltime }}</span>
             <span class="pull-right gray-light">last commit: <strong><a href="#">{{ commit.short_sha1sum }}</a></strong></span>
           </div>
-          <table class="table table-hover table-condensed table-bordered">
+          <table class="table table-hover table-condensed table-bordered table-striped">
             <tbody>
               {% for folder_or_filename, object in commit.tree.iteritems %}
               <tr>
@@ -103,19 +129,27 @@
         </div>
       </div>
 
-      <div class="tab-pane" id="tab-pull-branches">
-        <h3>Branches</h3>
+      <div class="tab-pane" id="tab-commits">
+        <h3>Commits</h3>
         <div class="alert alert-danger">
           <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-          Check back soon. This feature will allow you to code review and manage pull requests.
+          Check back soon. This feature will allow you to view a breakdown of all your commits.
         </div>
       </div>
 
-      <div class="tab-pane" id="tab-releases">
-        <h3>Releases</h3>
+      <div class="tab-pane" id="tab-branches">
+        <h3>Branches</h3>
         <div class="alert alert-danger">
           <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-          Check back soon. This feature will allow you to track any issue updates.
+          Check back soon. This feature will allow you to view a breakdown of all your branches.
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-tags">
+        <h3>Tags</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to view a breakdown of all your tags.
         </div>
       </div>
 
@@ -123,9 +157,27 @@
         <h3>Contributors</h3>
         <div class="alert alert-danger">
           <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-          Check back soon. This feature will allow you to manage your starred projects.
+          Check back soon. This feature will allow you to see your project contributors.
         </div>
       </div>
+
+      <div class="tab-pane" id="tab-issues">
+        <h3>Issues</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to manage your project's issues.
+        </div>
+      </div>
+
+      {% if user_is_admin %}
+      <div class="tab-pane" id="tab-settings">
+        <h3>Settings</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to manage your projects.
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

@@ -72,6 +72,18 @@ class Project(models.Model):
     def git(self, value):
         self._git = value
 
+    @property
+    def contributors(self):
+        from account.models import User
+        return User.objects.filter(author_for_commits__project=self).distinct()
+
+    def is_admin(self, user):
+        if user == self.owner:
+            return True
+        if self.organization and self.organization.is_admin(user):
+            return True
+        return False
+
     @transaction.atomic
     def star(self, user):
         self.starred_by.add(user)
@@ -226,7 +238,7 @@ class Commit(models.Model):
     sha1sum = models.CharField(max_length=60, db_index=True)
     parents = models.ManyToManyField('Commit', related_name='+')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                               related_name='author_for_committs')
+                               related_name='author_for_commits')
     author_email = models.EmailField()
     author_name = models.CharField(max_length=256)
     author_time = models.DateTimeField()
