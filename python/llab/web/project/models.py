@@ -6,6 +6,8 @@ import pytz
 
 import django.dispatch
 
+from collections import OrderedDict
+
 from django.db import models, transaction
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
@@ -211,6 +213,9 @@ class Branch(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='branches')
 
+    def short_name(self):
+        return self.name.split('/')[-1]
+
     def __unicode__(self):
         return u'{}/{}'.format(self.project, self.name)
 
@@ -235,13 +240,13 @@ class Commit(models.Model):
     diff = JSONField()
 
     # The current tree as of this commit
-    tree = JSONField()
+    tree = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
 
     # The related branch and project for this commit
     branch = models.ForeignKey(Branch, related_name='commits')
     project = models.ForeignKey(Project, related_name='commits')
 
-    def sha1sum_short(self):
+    def short_sha1sum(self):
         return self.sha1sum[:7]
 
     @staticmethod
@@ -279,7 +284,7 @@ class Commit(models.Model):
         # The actual Commit object is fairly heavy
         return Commit.objects.create(
             commit_time=commit_time,
-            sha1sum=new_rev_commit.sha().hexdigest,
+            sha1sum=new_rev_commit.sha().hexdigest(),
             author=author,
             author_name=author_name,
             author_email=author_email,
@@ -294,7 +299,7 @@ class Commit(models.Model):
             project=project)
 
     def __unicode__(self):
-        return u'{} @ {}'.format(self.sha1sum_short(), self.project)
+        return u'{} @ {}'.format(self.short_sha1sum(), self.project)
 
 
 class CommitComment(models.Model):
