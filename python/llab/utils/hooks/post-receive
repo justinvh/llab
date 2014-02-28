@@ -15,6 +15,6 @@ project = Project.objects.get(name=repository, owner__username=username)
 push_user = User.objects.get(pk=push_user_pk)
 
 for line in sys.stdin.readlines():
-    old_rev, new_rev, refname = line.split(' ')
-    branch = refname.split('/')[-1]
+    old_rev, new_rev, refname = line.replace('\n', '').split(' ')
+    branch = refname.split('/')[-1].strip()
     project.post_receive(old_rev, new_rev, refname, branch, push_user)
