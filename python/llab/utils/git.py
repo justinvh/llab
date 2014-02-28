@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 
 import dulwich.repo
@@ -7,17 +9,25 @@ from collections import OrderedDict
 
 from dulwich.index import Index
 from dulwich.objects import S_ISGITLINK
+from dulwich.patch import is_binary
 from difflib import SequenceMatcher
 
 
 def commit_as_dict(commit):
+    start = commit.author.rfind('<')
+    author_email = commit.author[start + 1:-1]
+    start = commit.committer.rfind('<')
+    committer_email = commit.committer[start + 1:-1]
+
     return {'author': commit.author,
+            'author_email': author_email,
             'author_time': commit.author_time,
             'author_timezone': commit.author_timezone,
             'commit_time': commit.commit_time,
             'commit_timezone': commit.commit_timezone,
             'committer': commit.committer,
-            'message': commit.message.split('\n')[0][:50],
+            'committer_email': committer_email,
+            'message': commit.message.decode('utf-8').split('\n')[0][:50],
             'sha': commit.sha().hexdigest()}
 
 
@@ -32,15 +42,15 @@ def unified_diff(a, b, n=3):
                 continue
             if tag == 'replace' or tag == 'delete':
                 for i, line in enumerate(a[i1:i2], start=i1):
-                    if not line[-1] == '\n':
-                        line += '\n\\ No newline at end of file\n'
+                    if not line[-1] == u'\n':
+                        pass
                     entry = (i, '-', line)
                     diff.append(entry)
                     deleted += 1
             if tag == 'replace' or tag == 'insert':
                 for i, line in enumerate(b[j1:j2], start=j1):
-                    if not line[-1] == '\n':
-                        line += '\n\\ No newline at end of file\n'
+                    if not line[-1] == u'\n':
+                        pass
                     entry = (i, '+', line)
                     diff.append(entry)
                     added += 1
@@ -114,6 +124,9 @@ class Git(object):
             # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
             for change in walker.changes():
+                if not hasattr(change, 'new'):
+                    continue
+
                 path = change.new.path
                 if not path:
                     seen.add(change.old.path)
@@ -148,8 +161,9 @@ class Git(object):
         # Now reorganize the tree so when we display it then the tree
         # will display folder ABC -> files ABC
         ordered_tree = OrderedDict()
+        modified_tree = ordered_tree
 
-        def process_tree(tr):
+        def process_tree(tr, ot):
             stack, files, folders = [], [], []
 
             # Iterate through the current tree object
@@ -162,17 +176,17 @@ class Git(object):
 
             # Construct the ordered parameters of the tree
             for name, obj in sorted(folders):
-                ordered_tree[name] = obj
+                ot[name] = obj
 
             # Construct the ordered parameters of the tree
             for name, obj in sorted(files):
-                ordered_tree[name] = obj
+                ot[name] = obj
 
             # Repeat the process for the new node
             for item in stack:
-                process_tree(tr[item]['tree'])
+                process_tree(tr[item]['tree'], ot[item]['tree'])
 
-        process_tree(tree)
+        process_tree(tree, modified_tree)
 
         return ordered_tree
 
@@ -234,15 +248,21 @@ class Git(object):
 
             # Fetch all of the content
             old_content = content(old_mode, old_sha)
-            old_lines = lines(old_content)
             new_content = content(new_mode, new_sha)
-            new_lines = lines(new_content)
 
-            # Diff the file for changes
-            diff, added, deleted = unified_diff(old_lines, new_lines)
-            entry['diff'] = diff
-            entry['lines_added'] += added
-            entry['lines_deleted'] += deleted
+            if is_binary(old_content) or is_binary(new_content):
+                msg = 'Binary files {} and {} are different'
+                entry['diff'] = msg.format(old_path, new_path)
+                entry['lines_added'] = 0
+                entry['lines_deleted'] = 0
+            else:
+                # Diff the file for changes
+                new_lines = lines(new_content)
+                old_lines = lines(old_content)
+                diff, added, deleted = unified_diff(old_lines, new_lines)
+                entry['diff'] = diff
+                entry['lines_added'] += added
+                entry['lines_deleted'] += deleted
 
             # Aggregate statistics
             tree['stats']['lines_added'] += entry['lines_added']
