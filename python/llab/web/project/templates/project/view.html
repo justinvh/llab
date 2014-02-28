@@ -1,0 +1,46 @@
+{% extends "project/base.html" %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+{% load staticfiles %}
+
+{% block "project_content" %}
+<div class="container-llab">
+  <ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#tab-commits">Commits</a></li>
+    <li><a data-toggle="tab" href="#tab-branches">Branches</a></li>
+    <li><a data-toggle="tab" href="#tab-releases">Releases</a></li>
+    <li><a data-toggle="tab" href="#tab-contributors">Contributors</a></li>
+  </ul>
+</div>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="tab-commits">
+    <h3>Commits</h3>
+  </div>
+
+  <div class="tab-pane" id="tab-pull-branches">
+    <h3>Branches</h3>
+    <div class="alert alert-danger">
+      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+      Check back soon. This feature will allow you to code review and manage pull requests.
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-releases">
+    <h3>Releases</h3>
+    <div class="alert alert-danger">
+      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+      Check back soon. This feature will allow you to track any issue updates.
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-contributors">
+    <h3>Contributors</h3>
+    <div class="alert alert-danger">
+      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+      Check back soon. This feature will allow you to manage your starred projects.
+    </div>
+  </div>
+</div>
+{% endblock %}

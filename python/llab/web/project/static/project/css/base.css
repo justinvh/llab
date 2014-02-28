@@ -49,3 +49,11 @@
 .cursor {
     cursor: pointer;
 }
+
+.pad-right-5 {
+  padding-right: 5px;
+}
+
+.pad-right-10 {
+  padding-right: 10px;
+}

@@ -37,4 +37,9 @@ def project_new(request, owner=None, project=None):
 
 
 def project_view(request, owner, project):
-    raise NotImplementedError
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    context = {'project': project, 'owner': owner}
+    if not project.commits.exists():
+        return render(request, 'project/view-empty.html', context)
+    context['commit'] = project.commits.latest('id')
+    return render(request, 'project/view.html', context)

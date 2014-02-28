@@ -1,5 +1,6 @@
 import os
 import datetime
+import socket
 
 import pytz
 
@@ -11,7 +12,7 @@ from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
 
 from django.conf import settings
-from llab.utils.git import Git, commit_as_dict
+from llab.utils.git import Git
 from llab.utils.request import notify_users
 
 from organization.models import Organization
@@ -109,6 +110,15 @@ class Project(models.Model):
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH
         return os.path.join(repo, self.full_name())
+
+    def get_private_clone_path(self):
+        hostname = socket.gethostname()
+        username = os.environ.get('USER', 'git')
+        return u'{}@{}:{}'.format(username, hostname, self.full_name())
+
+    def get_public_clone_path(self):
+        hostname = socket.gethostname()
+        return u'http://{}/{}'.format(hostname, self.full_name())
 
     @transaction.atomic
     def save(self, *args, **kwargs):
