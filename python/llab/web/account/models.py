@@ -29,14 +29,18 @@ class User(AbstractUser):
         full_name = name_email[:start]
         email = name_email[start + 1:-1]
 
-        # Additional filtering
-        user = User.objects.filter(email=email)
+        # Attempt to associate by a project email account
+        candidate = User.objects.filter(email=email)
         if project:
-            user = user.filter(project=project)
-        if user:
-            user = user[0]
+            project_candidate = candidate.filter(project=project)
+            if project_candidate:
+                return project_candidate[0], full_name, email
 
-        return user, full_name, email
+        # Associate by a candidate
+        if candidate:
+            return candidate[0], full_name, email
+
+        return None, full_name, email
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

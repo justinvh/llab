@@ -97,12 +97,13 @@
           </div>
           <a href="#">{{ current_path }}</a> /
         </h4>
-        <div class="panel panel-info">
-          <div class="panel-heading"><a href="#">{{ commit.message }}</a></div>
+        <div class="panel panel-primary">
           <div class="panel-body">
+            {{ commit.short_message }}
+            <br>
             {% gravatar commit.author.gravatar 16 g %}
-            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.created|naturaltime }}</span>
-            <span class="pull-right gray-light">last commit: <strong><a href="#">{{ commit.short_sha1sum }}</a></strong></span>
+            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.created|naturaltime }}
+              on <a href="#">{{ commit.short_sha1sum }}</a></span>
           </div>
           <table class="table table-hover table-condensed table-bordered table-striped">
             <tbody>
@@ -113,14 +114,17 @@
                   <span class="glyphicon glyphicon-file"></span>
                   <a href="#">{{ folder_or_filename }}</a>
                   {% elif object.type == "folder" %}
-                  <span class="glyphicon glyphicon-folder-open"></span>
+                  <span class="glyphicon glyphicon-folder-open"></span>&nbsp;
                   <a href="#">{{ folder_or_filename }}/</a>
                   {% else %}
                   <span class="glyphicon glyphicon-file"></span>
                   <a href="#">{{ folder_or_filename }}</a>
                   {% endif %}
                 </td>
-                <td><a href="#">{{ object.commit.message }}</a></td>
+                <td title="{{ object.commit.author }}">
+                  {% gravatar object.commit.author_email 16 g %}
+                  <a href="#">{{ object.commit.message }}</a>
+                </td>
                 <td title="{{ object.commit.commit_time }}">{{ object.commit.commit_time|datetime|naturaltime }}</td>
               </tr>
               {% endfor %}

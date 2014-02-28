@@ -258,6 +258,9 @@ class Commit(models.Model):
     branch = models.ForeignKey(Branch, related_name='commits')
     project = models.ForeignKey(Project, related_name='commits')
 
+    def short_message(self):
+        return self.message.split('\n')[0]
+
     def short_sha1sum(self):
         return self.sha1sum[:7]
 
@@ -272,12 +275,12 @@ class Commit(models.Model):
 
         # Extract formatted author details
         new_author = new_rev_commit.author
-        author_info = User.from_commit(new_author)
+        author_info = User.from_commit(new_author, project)
         author, author_name, author_email = author_info
 
         # Extract formatted committer details
         new_committer = new_rev_commit.committer
-        committer_info = User.from_commit(new_committer)
+        committer_info = User.from_commit(new_committer, project)
         committer, committer_name, committer_email = committer_info
 
         # Branch fetching
