@@ -1,11 +1,12 @@
 import os
+
 import dulwich.repo
+
+from functools import partial
+
 from dulwich.index import Index
-from dulwich import diff_tree
 from dulwich.objects import S_ISGITLINK
 from difflib import SequenceMatcher
-
-from itertools import izip
 
 
 def commit_as_dict(commit):
@@ -23,7 +24,7 @@ def unified_diff(a, b, n=3):
     diff, added, deleted = [], [], []
     for g in SequenceMatcher(None, a, b).get_grouped_opcodes(n):
         i1, i2, j1, j2 = g[0][1], g[-1][2], g[0][3], g[-1][4]
-        for tag, i1, i2, j1, j2 in group:
+        for tag, i1, i2, j1, j2 in g:
             if tag == 'equal':
                 for i, line in enumerate(a[i1:i2], start=i1):
                     diff.append((i, ' ', line))
@@ -57,7 +58,7 @@ class Git(object):
         else:
             raise os.error('path or repo was not specified or found')
 
-    def commit(self, message):
+    def commit_changes(self, message):
         return self.repo.commit(message=message)
 
     def add(self, file_or_files):
@@ -71,10 +72,13 @@ class Git(object):
         repo = self.repo
         client, path = get_transport_and_path(remote)
         pack_contents = repo.object_store.generate_pack_contents
-        def update_refs(refs):
+
+        def update_refs(refs, branch):
             branch = 'refs/heads/' + branch
             refs[branch] = repo[branch]
-        return client.send_pack(path, update_refs, pack_contents)
+
+        update_refs_wrap = partial(update_refs, branch=branch)
+        return client.send_pack(path, update_refs_wrap, pack_contents)
 
     def lstree(self, sha=None):
         store = self.repo.object_store
@@ -137,7 +141,13 @@ class Git(object):
     def difflist(self, old_rev, new_rev):
         r = self.repo
         store = r.object_store
-        old_tree, new_tree = r[old_rev].tree, r[new_rev].tree
+
+        try:
+            old_tree = r[old_rev].tree
+        except KeyError:
+            old_tree = r.head()
+
+        new_tree = r[new_rev].tree
         changes = store.tree_changes(old_tree, new_tree)
 
         def shortid(hexsha):
@@ -158,7 +168,6 @@ class Git(object):
                 return []
             else:
                 return content.splitlines(True)
-
 
         tree = {'stats': {'files_added': 0,
                           'files_deleted': 0,
@@ -187,9 +196,9 @@ class Git(object):
 
             # Fetch all of the content
             old_content = content(old_mode, old_sha)
-            old_lines = lines(old_lines)
+            old_lines = lines(old_content)
             new_content = content(new_mode, new_sha)
-            new_lines = lines(new_lines)
+            new_lines = lines(new_content)
 
             # Diff the file for changes
             diff, added, deleted = unified_diff(old_lines, new_lines)
@@ -203,7 +212,6 @@ class Git(object):
             tree['changes'].append(entry)
 
         return tree
-
 
     def commit(self, old_rev):
         return self.repo[old_rev]
