@@ -57,3 +57,11 @@
 .pad-right-10 {
   padding-right: 10px;
 }
+
+.link {
+    cursor: pointer;
+}
+
+.link:hover {
+    text-decoration: underline;
+}

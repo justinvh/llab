@@ -1,12 +1,15 @@
 import user_streams
+import json
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django import http
+from django.db.models import Q
 
 from llab.utils.request import post_or_none
 
 from .forms import ProjectForm
-from .models import Project
+from .models import Project, Commit
 
 
 @login_required
@@ -36,14 +39,39 @@ def project_new(request, owner=None, project=None):
     return render(request, 'project/new.html', context)
 
 
-def project_view(request, owner, project):
+def project_view(request, owner, project, commit=None, path=None):
     project = get_object_or_404(Project, name=project, owner__username=owner)
     context = {'project': project, 'owner': owner}
 
     if not project.commits.exists():
         return render(request, 'project/view-empty.html', context)
 
-    context.update({'commit': project.commits.latest('id'),
+    if commit:
+        try:
+            sha1sum, branch = commit, commit
+            q = (Q(project=project) &
+                 (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
+            commit = Commit.objects.filter(q).latest('id')
+        except Commit.DoesNotExist:
+            raise http.Http404('Commit or branch does not exist')
+    else:
+        commit = project.commits.latest('id')
+
+    if path:
+        tree = commit.tree
+        path = path.split('/')[:-1]
+        for item in path:
+            new_tree = tree.get(item)
+            if new_tree and new_tree['type'] == 'folder':
+                tree = new_tree['tree']
+            elif new_tree and new_tree['type'] == 'file':
+                raise http.Http404('Filepaths are not supported')
+            else:
+                raise http.Http404('Path not found')
+
+
+    context.update({'commit': commit,
+                    'path': json.dumps(path or []),
                     'branch_count': project.branches.count(),
                     'commit_count': project.commits.count(),
                     'contributor_count': project.contributors.count(),
@@ -52,3 +80,16 @@ def project_view(request, owner, project):
                     'user_is_admin': project.is_admin(request.user)})
 
     return render(request, 'project/view.html', context)
+
+
+def project_tree(request, owner, project, commit, path):
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    try:
+        sha1sum, branch = commit, commit
+        q = (Q(project=project) &
+            (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
+        commit = Commit.objects.filter(q).latest('id')
+        content = json.dumps(commit.tree)
+        return http.HttpResponse(content, content_type='application/json')
+    except Commit.DoesNotExist:
+        raise http.Http404('Commit or branch does not exist')

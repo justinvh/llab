@@ -313,6 +313,9 @@ class Commit(models.Model):
             branch=branch,
             project=project)
 
+    class Meta:
+        unique_together = ('project', 'sha1sum')
+
     def __unicode__(self):
         return u'{} @ {}'.format(self.short_sha1sum(), self.project)
 
