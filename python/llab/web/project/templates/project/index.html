@@ -5,59 +5,60 @@
 {% load staticfiles %}
 
 {% block "project_content" %}
-<div class="container-llab">
-  <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#tab-news-feed">News Feed</a></li>
-    <li><a data-toggle="tab" href="#tab-pull-requests">Pull Requests</a></li>
-    <li><a data-toggle="tab" href="#tab-issues">Issues</a></li>
-    <li><a data-toggle="tab" href="#tab-stars">Stars</a></li>
-  </ul>
-</div>
-
-<div class="tab-content">
-  <div class="tab-pane active" id="tab-news-feed">
-    <h3>Your News Feed</h3>
-    <p>Your news feed is an activity stream for your projects and the projects
-       that you watch. Keep an eye out for any updates!</p>
-     <hr>
-    <ul id="news-feed" class="media-list">
-      {% for item in newsfeed %}
-      <li class="media">
-        {{ item.content|safe }}
-        <span class="text-muted newsfeed-time"><small>{{ item.created_at|naturaltime }}</small></span>
-      </li>
-      {% empty %}
-      <li class="media">
-        <div class="alert alert-info">
-          <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Star projects to see their activity here."></span>
-          You have no updates.
-        </div>
-      </li>
-      {% endfor %}
+<div class="row">
+  <div class="col-md-10 center-block no-float">
+    <ul class="nav nav-tabs">
+      <li class="active"><a data-toggle="tab" href="#tab-news-feed">News Feed</a></li>
+      <li><a data-toggle="tab" href="#tab-pull-requests">Pull Requests</a></li>
+      <li><a data-toggle="tab" href="#tab-issues">Issues</a></li>
+      <li><a data-toggle="tab" href="#tab-stars">Stars</a></li>
     </ul>
-  </div>
 
-  <div class="tab-pane" id="tab-pull-requests">
-    <h3>Pull Requests</h3>
-    <div class="alert alert-danger">
-      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-      Check back soon. This feature will allow you to code review and manage pull requests.
+  <div class="tab-content">
+    <div class="tab-pane active" id="tab-news-feed">
+      <h3>Your News Feed</h3>
+      <p>Your news feed is an activity stream for your projects and the projects
+        that you watch. Keep an eye out for any updates!</p>
+      <hr>
+      <ul id="news-feed" class="media-list">
+        {% for item in newsfeed %}
+        <li class="media">
+          {{ item.content|safe }}
+          <span class="text-muted newsfeed-time"><small>{{ item.created_at|naturaltime }}</small></span>
+        </li>
+        {% empty %}
+        <li class="media">
+          <div class="alert alert-info">
+            <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Star projects to see their activity here."></span>
+            You have no updates.
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
-  </div>
 
-  <div class="tab-pane" id="tab-issues">
-    <h3>Issue Updates</h3>
-    <div class="alert alert-danger">
-      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-      Check back soon. This feature will allow you to track any issue updates.
+    <div class="tab-pane" id="tab-pull-requests">
+      <h3>Pull Requests</h3>
+      <div class="alert alert-danger">
+        <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+        Check back soon. This feature will allow you to code review and manage pull requests.
+      </div>
     </div>
-  </div>
 
-  <div class="tab-pane" id="tab-stars">
-    <h3>Starred Projects</h3>
-    <div class="alert alert-danger">
-      <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
-      Check back soon. This feature will allow you to manage your starred projects.
+    <div class="tab-pane" id="tab-issues">
+      <h3>Issue Updates</h3>
+      <div class="alert alert-danger">
+        <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+        Check back soon. This feature will allow you to track any issue updates.
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-stars">
+      <h3>Starred Projects</h3>
+      <div class="alert alert-danger">
+        <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+        Check back soon. This feature will allow you to manage your starred projects.
+      </div>
     </div>
   </div>
 </div>

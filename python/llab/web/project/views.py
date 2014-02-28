@@ -42,4 +42,7 @@ def project_view(request, owner, project):
     if not project.commits.exists():
         return render(request, 'project/view-empty.html', context)
     context['commit'] = project.commits.latest('id')
+    context['branch_count'] = project.branches.count()
+    context['commit_count'] = project.commits.count()
+    context['current_path'] = project.name
     return render(request, 'project/view.html', context)
