@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import login_required
+
+from django_gravatar.helpers import get_gravatar_url
 
 from llab.utils.request import post_or_none
 
@@ -20,3 +21,10 @@ def account_join(request):
     template = 'account/join.html'
     context = {'form': form}
     return render(request, template, context)
+
+
+def account_gravatar(request):
+    email = request.GET.get('email')
+    size = request.GET.get('size', 16)
+    rating = request.GET.get('rating', 'g')
+    return redirect(get_gravatar_url(email, size, 'mm', rating))

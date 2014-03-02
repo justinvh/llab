@@ -6,6 +6,9 @@ urlpatterns = patterns('account.views',
 
     # Manage the user's account keys
     url(r'^settings/', include('account.settings.urls', namespace='settings')),
+
+    # Wrapper for gravatar support
+    url(r'^gravatar/$', 'account_gravatar', name='gravatar'),
 )
 
 urlpatterns += patterns('',
