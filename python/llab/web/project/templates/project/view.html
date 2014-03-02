@@ -6,6 +6,11 @@
 {% load staticfiles %}
 {% load project_extras %}
 
+{% block javascript %}
+<script src="{% static "project/js/3rd-party/humanize.js" %}"></script>
+<script src="{% static "project/js/view.js" %}"></script>
+{% endblock %}
+
 {% block "project_content" %}
 <div class="row">
   <div class="col-md-10 center-block no-float">
@@ -168,94 +173,12 @@
 </div>
 
 <script>
-/* DEBUG CODE
- * This is my prototyping area for tree traversal.
- */
-$.getJSON('{% url "project:tree" project=project.name owner=project.owner.username commit=commit.sha1sum path="/" %}',
-function (full_tree) {
-    var $tree = $('#source-tree');
-    var $breadcrumb = $('#source-tree-breadcrumb');
-    var prev_tree = [];
-    var prev_tree_path = ['llab'];
-    var curr_tree = full_tree;
-    var tree_path = 'tree/{{ commit.branch.short_name }}/';
-    var initial_path = {{ path|safe }};
-
-    var build_tree = function (tree) {
-        $tree.html('');
-
-        if (prev_tree.length) {
-            var record = '<tr>';
-            record += '<td class="prev-tree">' + '<span class="text-primary link">../</span>' +'</td>';
-            record += '<td></td>';
-            record += '<td></td>';
-            record += '</tr>';
-            $tree.append($(record));
-        }
-
-        for (var item in tree) {
-            var obj = tree[item];
-            var item_name = item
-            var item_type = obj['type'];
-            var item_tree = obj['tree'];
-            var item_message = obj['commit']['message']
-            var item_time = obj['commit']['commit_time']
-            var item_email = obj['commit']['committer_email']
-
-            // Construct the appropriate URL
-            var url = '#';
-            var item_url = '<a href="' + url + '">' + item_name + '</a>';
-
-            // Construct the appropriate glyph
-            var glyph = 'glyphicon-file';
-            if (item_type == 'folder') {
-                glyph = 'glyphicon-folder-close';
-                item_url = '<span class="text-primary link">' + item_name + '</span>';
-            }
-            glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
-
-            // Construct the record
-            var record = '<tr>';
-            record += '<td class="' + item_type + '" data-name="' + item_name + '">' + glyph + item_url + '</td>';
-            record += '<td>' + item_message + '</td>';
-            record += '<td>' + item_time + '</td>';
-            record += '</tr>';
-
-            $tree.append($(record));
-        }
-
-        $('td.prev-tree > span').click(function () {
-            history.back();
-            curr_tree = prev_tree.pop()
-            prev_tree_path.pop();
-            build_tree(curr_tree);
-            return false;
-        });
-
-        $('td.folder > span').click(function () {
-            var item_name = $(this).parent().data('name');
-            prev_tree.push(curr_tree);
-            prev_tree_path.push(item_name);
-            curr_tree = curr_tree[item_name].tree;
-            build_tree(curr_tree);
-            if (prev_tree.length == 1) {
-                item_name = tree_path + item_name;
-            }
-            history.pushState({}, '', item_name + '/');
-            return false;
-        });
-    };
-
-    for (var i = 0; i < initial_path.length; i++) {
-        var name = initial_path[i];
-        if (curr_tree[name] && curr_tree[name].type == "folder") {
-            prev_tree.push(curr_tree);
-            prev_tree_path.push(name);
-            curr_tree = curr_tree[name].tree;
-        }
-    }
-
-    build_tree(curr_tree);
-});
+  var project = "{{ project.name }}";
+  var owner = "{{ project.owner.username }}";
+  var branch = "{{ commit.branch.short_name }}";
+  var commit = "{{ commit.sha1sum }}";
+  var path = "{{ current_path }}";
+  llab.build_tree(project, owner, branch, commit, path);
 </script>
+
 {% endblock %}

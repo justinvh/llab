@@ -59,8 +59,7 @@ def project_view(request, owner, project, commit=None, path=None):
 
     if path:
         tree = commit.tree
-        path = path.split('/')[:-1]
-        for item in path:
+        for item in path.split('/')[:-1]:
             new_tree = tree.get(item)
             if new_tree and new_tree['type'] == 'folder':
                 tree = new_tree['tree']
@@ -68,15 +67,15 @@ def project_view(request, owner, project, commit=None, path=None):
                 raise http.Http404('Filepaths are not supported')
             else:
                 raise http.Http404('Path not found')
-
+    else:
+        path = project.name
 
     context.update({'commit': commit,
-                    'path': json.dumps(path or []),
                     'branch_count': project.branches.count(),
                     'commit_count': project.commits.count(),
                     'contributor_count': project.contributors.count(),
                     'tag_count': project.tags.count(),
-                    'current_path': project.name,
+                    'current_path': path,
                     'user_is_admin': project.is_admin(request.user)})
 
     return render(request, 'project/view.html', context)
@@ -89,7 +88,7 @@ def project_tree(request, owner, project, commit, path):
         q = (Q(project=project) &
             (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
         commit = Commit.objects.filter(q).latest('id')
-        content = json.dumps(commit.tree)
+        content = json.dumps({'tree': commit.tree, 'path': path})
         return http.HttpResponse(content, content_type='application/json')
     except Commit.DoesNotExist:
         raise http.Http404('Commit or branch does not exist')
