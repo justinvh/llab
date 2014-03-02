@@ -176,6 +176,9 @@ class Project(models.Model):
             users = (role.user for role in self.organization.roles)
         return users
 
+    def latest_commit(self):
+        return self.commits.latest('created')
+
     def post_receive(self, old_rev, new_rev, refname, name, push_user):
         # Determine if we are operating on a branch or tag
         klass = 'branch'
@@ -224,6 +227,15 @@ class Project(models.Model):
 class Branch(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='branches')
+
+    def get_absolute_url(self):
+        project = self.project
+        owner = project.owner
+        if project.organization:
+            owner = project.organization.name
+        kwds = {'owner': owner, 'project': project.name,
+                'commit': self.name, 'path': ''}
+        return reverse('project:tree', kwargs=kwds)
 
     def short_name(self):
         return self.name.split('/')[-1]
@@ -315,6 +327,15 @@ class Commit(models.Model):
 
     class Meta:
         unique_together = ('project', 'sha1sum')
+
+    def get_absolute_url(self):
+        project = self.project
+        owner = project.owner
+        if project.organization:
+            owner = project.organization.name
+        kwds = {'owner': owner, 'project': project.name,
+                'commit': self.sha1sum}
+        return reverse('project:commit', kwargs=kwds)
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.short_sha1sum(), self.project)

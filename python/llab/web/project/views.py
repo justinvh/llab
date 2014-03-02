@@ -15,8 +15,11 @@ from .models import Project, Commit
 @login_required
 def project_index(request):
     newsfeed = user_streams.get_stream_items(request.user)
+    newsfeed_new = list(newsfeed.filter(seen=False))
+    newsfeed_old = list(newsfeed.filter(seen=True)[:10])
     newsfeed.update(seen=True)
-    context = {'newsfeed': newsfeed}
+    context = {'newsfeed_old': newsfeed_old,
+               'newsfeed_new': newsfeed_new}
     return render(request, 'project/index.html', context)
 
 

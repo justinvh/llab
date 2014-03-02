@@ -2,16 +2,18 @@
 
 {% load bootstrap3 %}
 {% load humanize %}
+{% load gravatar %}
 {% load staticfiles %}
 
 {% block "project_content" %}
 <div class="row">
   <div class="col-md-10 center-block no-float">
     <ul class="nav nav-tabs">
-      <li class="active"><a data-toggle="tab" href="#tab-news-feed">News Feed</a></li>
-      <li><a data-toggle="tab" href="#tab-pull-requests">Pull Requests</a></li>
-      <li><a data-toggle="tab" href="#tab-issues">Issues</a></li>
-      <li><a data-toggle="tab" href="#tab-stars">Stars</a></li>
+      <li class="active"><a data-toggle="tab" href="#tab-news-feed">{{ newsfeed_new.count }} Update{{ newsfeed_new.count|pluralize }}</a></li>
+      <li><a data-toggle="tab" href="#tab-projects">{{ user.projects.count }} Project{{ user.projects.count|pluralize }}</a></li>
+      <li><a data-toggle="tab" href="#tab-pull-requests">0 Pull Requests</a></li>
+      <li><a data-toggle="tab" href="#tab-issues">0 Issues</a></li>
+      <li><a data-toggle="tab" href="#tab-stars">0 Starred</a></li>
     </ul>
 
   <div class="tab-content">
@@ -21,7 +23,7 @@
         that you watch. Keep an eye out for any updates!</p>
       <hr>
       <ul id="news-feed" class="media-list">
-        {% for item in newsfeed %}
+        {% for item in newsfeed_new %}
         <li class="media">
           {{ item.content|safe }}
           <span class="text-muted newsfeed-time"><small>{{ item.created_at|naturaltime }}</small></span>
@@ -30,7 +32,51 @@
         <li class="media">
           <div class="alert alert-info">
             <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Star projects to see their activity here."></span>
-            You have no updates.
+            You have no new updates.
+          </div>
+        </li>
+        {% endfor %}
+        {% if newsfeed_old %}
+        <hr>
+        {% for item in newsfeed_old %}
+        <li class="media gray-light">
+          {{ item.content|safe }}
+          <span class="text-muted newsfeed-time"><small>{{ item.created_at|naturaltime }}</small></span>
+        </li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="tab-pane" id="tab-projects">
+      <h3>Projects</h3>
+      <p>This is a list of your projects. Go commit!</p>
+      <hr>
+      <ul id="project-feed" class="media-list">
+        {% for project in user.projects.all %}
+        <li class="media">
+          <a class="pull-left" href="#">
+            {% gravatar project.owner.email 32 g %}
+          </a>
+          <div class="media-body">
+            <h4 class="media-heading">
+              <a href="{{ project.get_absolute_url }}">{{ project.full_name }}</a> - {{ project.description }}
+            </h4>
+          </div>
+          {% with commit=project.latest_commit %}
+          <span class="text-muted newsfeed-time">
+            <small>updated <strong title="{{ commit.created }}">{{ commit.created|naturaltime }}</strong>
+              on <strong><a href="{{ commit.branch.get_absolute_url }}">{{ commit.branch.short_name }}</a></strong> as
+              <strong><a href="{{ commit.get_absolute_url }}">{{ commit.short_sha1sum }}</a></strong>.
+            </small>
+          </span>
+          {% endwith %}
+        </li>
+        {% empty %}
+        <li class="media">
+          <div class="alert alert-info">
+            <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Star projects to see their activity here."></span>
+            You have no projects. Go <a href="{% url "project:new" %}">create</a> a project.
           </div>
         </li>
         {% endfor %}

@@ -14,7 +14,7 @@ urlpatterns = patterns('project.views',
     # View the owner's referenced project
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
          r'(?P<commit>[\w]+)/(?P<path>.*)$'),
-        'project_view', name='view'),
+        'project_view', name='tree'),
 
     # View the owner's referenced project's commit tree
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/json/tree/'
@@ -24,4 +24,13 @@ urlpatterns = patterns('project.views',
     # Fork an existing project
     url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/fork$',
         'project_new', name='new'),
+)
+
+
+# Commit related URL patterns
+urlpatterns += patterns('project.views',
+    # View the owner's referenced project
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commit/'
+         r'(?P<commit>[\w]+)/$'),
+        'project_view', name='commit'),
 )
