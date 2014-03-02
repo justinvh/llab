@@ -282,8 +282,10 @@ class Commit(models.Model):
         new_rev_commit = project.git.commit(new_rev)
 
         # Extract the project tree and diffs
+        diff = []
         tree = project.git.revtree(sha=new_rev)
-        diff = project.git.difflist(old_rev, new_rev)
+        if not old_rev.startswith('0000000'):
+            diff = project.git.difflist(old_rev, new_rev)
 
         # Extract formatted author details
         new_author = new_rev_commit.author
