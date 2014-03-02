@@ -49,7 +49,8 @@ llab.resolve = function (name, kwargs) {
 
 llab.getJSON = function (name, kwargs, params, callback) {
     if (typeof(params) === "function") {
-        return $.getJSON(llab.resolve(name, kwargs), {}, callback);
+        callback = params;
+        params = {};
     }
     return $.getJSON(llab.resolve(name, kwargs), params, callback);
 };
