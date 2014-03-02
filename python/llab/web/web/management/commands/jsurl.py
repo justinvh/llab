@@ -15,50 +15,44 @@ RE_ARG = re.compile(r"(\(.*?\))")
 
 JS_PRELOAD = """
 var llab = {};
-llab.conf = %s;
+llab.urls = %s;
 
-llab.urls = function() {
+llab.resolve = function (name, kwargs) {
+    var path = llab.urls[name];
 
-    function _get_path(name, kwargs, urls) {
-        var path = urls[name] || false;
-
-        if (!path) {
-            throw('URL not found for view: ' + name);
-        }
-
-        var _path = path;
-
-        var key;
-        for (key in kwargs) {
-            if (kwargs.hasOwnProperty(key)) {
-                if (!path.match('<' + key +'>')) {
-                    throw(key + ' does not exist in ' + _path);
-                }
-                path = path.replace('<' + key +'>', kwargs[key]);
-            }
-        }
-
-        var re = new RegExp('<[a-zA-Z0-9-_]{1,}>', 'g');
-        var missing_args = path.match(re);
-        if (missing_args) {
-            throw('Missing arguments ('
-                + missing_args.join(", ") + ') for url ' + _path);
-        }
-
-        return path;
-
+    if (!path) {
+        throw('URL not found for view: ' + name);
     }
 
-    return {
-        resolve: function(name, kwargs, urls) {
-            if (!urls) {
-                urls = llab.conf.urls || {};
-            }
-            return _get_path(name, kwargs, urls);
+    var original_path = path;
+    for (var key in kwargs) {
+        if (!kwargs.hasOwnProperty(key)) {
+            continue;
         }
-    };
 
-}();
+        if (!path.match('<' + key +'>')) {
+            throw(key + ' does not exist in ' + original_path);
+        }
+
+        path = path.replace('<' + key +'>', kwargs[key]);
+    }
+
+    var re = new RegExp('<[a-zA-Z0-9-_]{1,}>', 'g');
+    var missing_args = path.match(re);
+    if (missing_args) {
+        throw('Missing arguments ('
+            + missing_args.join(", ") + ') for url ' + _path);
+    }
+
+    return path;
+};
+
+llab.getJSON = function (name, kwargs, params, callback) {
+    if (typeof(params) === "function") {
+        return $.getJSON(llab.resolve(name, kwargs), {}, callback);
+    }
+    return $.getJSON(llab.resolve(name, kwargs), params, callback);
+};
 
 """
 
