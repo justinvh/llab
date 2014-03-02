@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'account.settings',
     'organization',
     'project',
+    'web',
 
     # Local builtins
     'account.user_streams_single_table_backend',

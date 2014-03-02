@@ -9,3 +9,7 @@ urlpatterns = patterns('',
     url(r'^', include('project.urls', namespace='project')),
     url(r'^', include('organization.urls', namespace='organization')),
 )
+
+urlpatterns += patterns('web.views',
+    url(r'^urls.js$', 'urls', name='urls')
+)
