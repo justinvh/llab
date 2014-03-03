@@ -2,6 +2,49 @@
  * requires: 3rd-party/humanize.js
  */
 
+llab.readme_cache = {};
+llab.render_readme = function (owner, project, commit, directory) {
+    var kwargs = {'owner': owner, 'project': project,
+                  'commit': commit, 'directory': directory};
+    var url = llab.resolve('project:readme', kwargs);
+    var $readme = $('#readme');
+    var $body = $('#readme-body');
+
+    if (url in llab.readme_cache) {
+        $readme.show();
+        $body.html(llab.readme_cache[url]);
+        return true;
+    }
+
+    $.get(url, function (content) {
+        $readme.show();
+        $body.html(content);
+        llab.readme_cache[url] = content;
+    }).fail(function () {
+        $readme.hide();
+    });
+};
+
+llab.readme_exists = function (curr_tree) {
+    var to_try = ['README.md', 'readme.md', 'README.txt', 'readme.txt'];
+    for (var i = 0; i < to_try.length; i++) {
+        if (to_try[i] in curr_tree) {
+            return curr_tree[to_try[i]].path;
+        }
+    }
+    return false;
+}
+
+llab.readme_if_exists = function (curr_tree, owner, project, commit) {
+    var path = llab.readme_exists(curr_tree);
+    if (path) {
+        var directory = path.split('/').slice(0, -1).join('/');
+        return llab.render_readme(owner, project, commit, directory);
+    } else {
+        $('#readme').hide();
+    }
+};
+
 llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var $tree = $('#source-tree');
     var $breadcrumb = $('#source-tree-breadcrumb');
@@ -9,6 +52,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var prev_tree_path = ['llab'];
     var curr_tree = ftree.tree;
     var tree_path = 'tree/' + branch + '/';
+    var real_path = path;
     var initial_path = path.split('/');
 
     var build_tree = function (tree) {
@@ -71,6 +115,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             curr_tree = prev_tree.pop()
             prev_tree_path.pop();
             build_tree(curr_tree);
+            llab.readme_if_exists(curr_tree, owner, project, commit);
             return false;
         });
 
@@ -80,6 +125,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             prev_tree_path.push(item_name);
             curr_tree = curr_tree[item_name].tree;
             build_tree(curr_tree);
+            llab.readme_if_exists(curr_tree, owner, project, commit);
             if (prev_tree.length == 1) {
                 item_name = tree_path + item_name;
             }
@@ -97,7 +143,9 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
         }
     }
 
+    // Construct the file tree and then render out any available README
     build_tree(curr_tree);
+    llab.readme_if_exists(curr_tree, owner, project, commit);
 };
 
 llab.build_tree = function (project, owner, branch, commit, path) {

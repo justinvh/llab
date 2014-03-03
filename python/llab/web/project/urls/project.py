@@ -37,5 +37,5 @@ urlpatterns = patterns('project.views.project',
 
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/readme/'
          r'(?P<commit>[\w]+)/$'),
-        'project_readme', name='readme'),
+        'project_readme', name='readme_toplevel'),
 )

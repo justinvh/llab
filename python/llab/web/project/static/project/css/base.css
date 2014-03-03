@@ -65,3 +65,7 @@
 .link:hover {
     text-decoration: underline;
 }
+
+code {
+    white-space: pre;
+}
