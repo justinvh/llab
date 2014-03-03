@@ -2,14 +2,14 @@
  * requires: 3rd-party/humanize.js
  */
 
-llab.build_from_tree = function (full_tree) {
+llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var $tree = $('#source-tree');
     var $breadcrumb = $('#source-tree-breadcrumb');
     var prev_tree = [];
     var prev_tree_path = ['llab'];
-    var curr_tree = full_tree.tree;
+    var curr_tree = ftree.tree;
     var tree_path = 'tree/' + branch + '/';
-    var initial_path = full_tree.path;
+    var initial_path = ftree.path;
 
     var build_tree = function (tree) {
         $tree.html('');
@@ -29,7 +29,9 @@ llab.build_from_tree = function (full_tree) {
             var item_name = obj;
 
             // Construct the appropriate URL
-            var url = '#';
+            var kwargs = {'owner': owner, 'project': project,
+                          'commit': commit, 'path': item.path};
+            var url = llab.resolve('project:file_for_commit', kwargs);
             var item_url = '<a href="' + url + '">' + item_name + '</a>';
 
             // Construct the appropriate glyph
@@ -101,5 +103,7 @@ llab.build_from_tree = function (full_tree) {
 llab.build_tree = function (project, owner, branch, commit, path) {
     var kwargs = {'project': project, 'owner': owner,
                   'commit': commit, 'path': path};
-    llab.getJSON('project:tree', kwargs, llab.build_from_tree);
+    llab.getJSON('project:tree', kwargs, function (full_tree) {
+        llab.build_from_tree(full_tree, project, owner, branch, commit, path);
+    });
 };

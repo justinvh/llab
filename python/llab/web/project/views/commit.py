@@ -19,4 +19,4 @@ def get_commit_or_404(owner, project, commit):
 def commit_file(request, owner, project, commit, path):
     commit = get_commit_or_404(owner, project, commit)
     content, content_type = commit.fetch_blob(path)
-    return http.HttpResponse(content, content_type=content_type)
+    return http.HttpResponse(content, content_type='text/plain')

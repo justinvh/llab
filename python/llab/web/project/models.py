@@ -287,6 +287,7 @@ class Commit(models.Model):
             tree = tree[item]['tree']
         content = self.project.git.fetch_blob(tree[filename]['blob'])
         content_type, _ = mimetypes.guess_type(filename)
+        content_type = content_type or 'text/plain'
         return content, content_type
 
     @staticmethod

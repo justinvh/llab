@@ -136,30 +136,30 @@ class Git(object):
                     continue
 
                 seen.add(path)
-                parts = path.split(os.sep)
+                dirs, filename = os.path.split(path)
+                dirs = dirs.split('/') if len(dirs) else []
                 blob = change.new.sha
 
+                entry = {'commit': commit,
+                         'blob': blob,
+                         'type': 'file',
+                         'path': path,
+                         'tree': {}}
+
                 # Construct a top-level descriptor
-                if len(parts) == 1:
-                    tree[parts[0]] = {'commit': commit,
-                                      'blob': blob,
-                                      'type': 'file',
-                                      'tree': {}}
+                if not dirs:
+                    tree[filename] = entry
                     continue
 
                 # Construct a tree with all the parts
                 rel_tree = tree
-                for part in parts[:-1]:
+                for part in dirs:
                     if not rel_tree.get(part):
                         rel_tree[part] = {'commit': commit,
                                           'type': 'folder',
                                           'tree': {}}
                     rel_tree = rel_tree[part]['tree']
-
-                rel_tree[parts[-1]] = {'commit': commit,
-                                       'type': 'file',
-                                       'blob': blob,
-                                       'tree': {}}
+                rel_tree[filename] = entry
 
         # Now reorganize the tree so when we display it then the tree
         # will display folder ABC -> files ABC
