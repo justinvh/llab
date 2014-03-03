@@ -8,8 +8,8 @@ from django.db.models import Q
 
 from llab.utils.request import post_or_none
 
-from .forms import ProjectForm
-from .models import Project, Commit
+from llab.web.project.forms import ProjectForm
+from llab.web.project.models import Project, Commit
 
 
 @login_required

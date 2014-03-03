@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('project.views',
+urlpatterns = patterns('project.views.project',
     # The newsfeed, etc.
     url(r'^$', 'project_index', name='index'),
 
@@ -24,11 +24,7 @@ urlpatterns = patterns('project.views',
     # Fork an existing project
     url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/fork$',
         'project_new', name='new'),
-)
 
-
-# Commit related URL patterns
-urlpatterns += patterns('project.views',
     # View the owner's referenced project
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commit/'
          r'(?P<commit>[\w]+)/$'),
