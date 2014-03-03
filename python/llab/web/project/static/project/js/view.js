@@ -9,7 +9,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var prev_tree_path = ['llab'];
     var curr_tree = ftree.tree;
     var tree_path = 'tree/' + branch + '/';
-    var initial_path = ftree.path;
+    var initial_path = path.split('/');
 
     var build_tree = function (tree) {
         $tree.html('');
