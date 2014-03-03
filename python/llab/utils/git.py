@@ -137,10 +137,12 @@ class Git(object):
 
                 seen.add(path)
                 parts = path.split(os.sep)
+                blob = change.new.sha
 
                 # Construct a top-level descriptor
                 if len(parts) == 1:
                     tree[parts[0]] = {'commit': commit,
+                                      'blob': blob,
                                       'type': 'file',
                                       'tree': {}}
                     continue
@@ -156,6 +158,7 @@ class Git(object):
 
                 rel_tree[parts[-1]] = {'commit': commit,
                                        'type': 'file',
+                                       'blob': blob,
                                        'tree': {}}
 
         # Now reorganize the tree so when we display it then the tree
@@ -310,6 +313,9 @@ class Git(object):
             hooks_added.append(b)
             shutil.copy2(a, b)
         return hooks
+
+    def fetch_blob(self, sha1sum):
+        return self.repo[sha1sum].data
 
     @classmethod
     def from_repo(cls, repo):

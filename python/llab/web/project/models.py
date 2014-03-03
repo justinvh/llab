@@ -1,6 +1,7 @@
 import os
 import datetime
 import socket
+import mimetypes
 
 import pytz
 
@@ -275,6 +276,18 @@ class Commit(models.Model):
 
     def short_sha1sum(self):
         return self.sha1sum[:7]
+
+    def fetch_blob(self, path):
+        tree = self.tree
+        directories, filename = os.path.split(path)
+        directories = directories.split('/') if len(directories) else []
+        for item in directories:
+            if item not in tree:
+                raise KeyError('{} for {}'.format(item, path))
+            tree = tree[item]['tree']
+        content = self.project.git.fetch_blob(tree[filename]['blob'])
+        content_type, _ = mimetypes.guess_type(filename)
+        return content, content_type
 
     @staticmethod
     def create_from_sha(project, old_rev, new_rev, refname):
