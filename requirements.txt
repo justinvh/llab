@@ -5,8 +5,7 @@ django-json-field==0.5.5
 django-user-streams==0.6.0
 dulwich==0.9.4
 lockfile==0.9.1
-markdown2==2.2.0
-markup==0.2
+misaka==1.0.2
 pycrypto==2.6.1
 python-dateutil==2.2
 pytz==2013.9
