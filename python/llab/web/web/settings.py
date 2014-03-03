@@ -15,6 +15,7 @@ import mimetypes
 mimetypes.init()
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+VALID_README = ('README.md', 'readme.md', 'readme.txt', 'README.txt')
 
 # The path where Dulwich / git-protocol will clone the repositories
 GIT_REPOSITORY_PATH = os.path.join(BASE_DIR, 'repositories')

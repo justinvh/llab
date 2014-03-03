@@ -1,8 +1,10 @@
 import user_streams
 import json
+import os
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
 from django import http
 from django.db.models import Q
 
@@ -10,6 +12,8 @@ from llab.utils.request import post_or_none
 
 from llab.web.project.forms import ProjectForm
 from llab.web.project.models import Project, Commit
+
+from .helpers import get_commit_or_404, safe_markdown
 
 
 @login_required
@@ -85,13 +89,18 @@ def project_view(request, owner, project, commit=None, path=None):
 
 
 def project_tree(request, owner, project, commit, path):
-    project = get_object_or_404(Project, name=project, owner__username=owner)
-    try:
-        sha1sum, branch = commit, commit
-        q = (Q(project=project) &
-            (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
-        commit = Commit.objects.filter(q).latest('id')
-        content = json.dumps({'tree': commit.tree, 'path': path})
-        return http.HttpResponse(content, content_type='application/json')
-    except Commit.DoesNotExist:
-        raise http.Http404('Commit or branch does not exist')
+    commit = get_commit_or_404(owner, project, commit)
+    content = json.dumps({'tree': commit.tree, 'path': path})
+    return http.HttpResponse(content, content_type='application/json')
+
+
+def project_readme(request, owner, project, commit, directory=""):
+    commit = get_commit_or_404(owner, project, commit)
+    for readme in settings.VALID_README:
+        try:
+            content, _ = commit.fetch_blob(os.path.join(directory, readme))
+            content = safe_markdown(content)
+            return http.HttpResponse(content, content_type='text/html')
+        except KeyError:
+            continue
+    raise http.Http404('A valid readme could not be found')
