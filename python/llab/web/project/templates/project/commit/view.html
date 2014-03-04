@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+{% load gravatar %}
+{% load staticfiles %}
+{% load project_extras %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 center-block no-float">
+    <h3>
+      <small class="gray-light pad-right-10">
+      {% if project.private %}
+      PRIVATE
+      {% else %}
+      PUBLIC
+      {% endif %}
+      <span class="glyphicon glyphicon-book"></span>
+      </small>
+      <a href="#">{{ project.owner.username }}</a> /
+      <strong><a href="#">{{ project.name }}</a></strong>
+    </h3>
+
+    <hr>
+
+    <h4 class="gray-light">{{ project.description }} - <a href="#">Edit</a></h4>
+
+    <br>
+
+    <ul class="nav nav-tabs">
+      <li class="active">
+        <a data-toggle="tab" href="#tab-source">
+          <span class="glyphicon glyphicon-book"></span>
+          <strong>Source</strong>
+        </a>
+      </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-commits">
+          <span class="glyphicon glyphicon-list"></span>
+          <strong>{{ commit_count }}</strong> Commit{{ commit_count|pluralize }}
+        </a>
+      </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-branches">
+          <span class="glyphicon glyphicon-tree-conifer"></span>
+          <strong>{{ branch_count }}</strong> Branch{{ branch_count|pluralize:"es" }}
+        </a>
+      </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-tags">
+          <span class="glyphicon glyphicon-calendar"></span>
+          <strong>{{ tag_count }}</strong> Tag{{ tag_count|pluralize }}
+        </a>
+      </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-contributors">
+          <span class="glyphicon glyphicon-globe"></span>
+          <strong>{{ contributor_count }}</strong> Contributor{{ contributor_count|pluralize }}
+        </a>
+      </li>
+
+      <li>
+        <a data-toggle="tab" href="#tab-issues">
+          <span class="glyphicon glyphicon-wrench"></span>
+          0 Issues
+        </a>
+      </li>
+
+      {% if user_is_admin %}
+      <li>
+        <a data-toggle="admin" href="#tab-issues">
+          <span class="glyphicon glyphicon-cog"></span>
+          Settings
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab-source">
+        <h4>
+          <div class="btn-group">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              <span class="glyphicon glyphicon-tree-conifer"></span> branch: {{ commit.branch.short_name }}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              {% for branch in project.branches.all %}
+              <li><a href="#">{{ branch.short_name }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+          <span id="source-tree-breadcrumb">
+              <a href="#">{{ current_path }}</a> /
+          </span>
+        </h4>
+        <div class="panel panel-primary">
+          <div class="panel-body">
+            {{ commit.message }}
+            <br>
+            {% gravatar commit.author.gravatar 16 g %}
+            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.created|naturaltime }}
+              on <a href="#">{{ commit.short_sha1sum }}</a></span>
+          </div>
+          <table class="table table-hover table-condensed table-bordered table-striped">
+            <tbody id="source-tree">
+            </tbody>
+          </table>
+        </div>
+        <div id="readme" class="panel panel-primary">
+          <div id="readme-body" class="panel-body">
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-commits">
+        <h3>Commits</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to view a breakdown of all your commits.
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-branches">
+        <h3>Branches</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to view a breakdown of all your branches.
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-tags">
+        <h3>Tags</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to view a breakdown of all your tags.
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-contributors">
+        <h3>Contributors</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to see your project contributors.
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-issues">
+        <h3>Issues</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to manage your project's issues.
+        </div>
+      </div>
+
+      {% if user_is_admin %}
+      <div class="tab-pane" id="tab-settings">
+        <h3>Settings</h3>
+        <div class="alert alert-danger">
+          <span class="glyphicon glyphicon-exclamation-sign" data-toggle="tooltip" title="The developers have not implemented this feature."></span>
+          Check back soon. This feature will allow you to manage your projects.
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  var project = "{{ project.name }}";
+  var owner = "{{ project.owner.username }}";
+  var branch = "{{ commit.branch.short_name }}";
+  var commit = "{{ commit.sha1sum }}";
+</script>
+
+{% endblock %}

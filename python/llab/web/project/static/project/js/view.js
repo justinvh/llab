@@ -90,10 +90,14 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             var gravatar_url = llab.resolve('account:gravatar');
             gravatar_url += '?email=' + email + '&size=16';
 
+            kwargs = {'owner': owner, 'project': project,
+                      'commit': item.commit.sha};
+            var commit_view_url = llab.resolve('project:commit:view', kwargs);
             var commit_url = '<img title="' + email + '"';
             commit_url += ' class="gravatar" width=16 height=16 ';
             commit_url += 'src="' + gravatar_url + '"> ';
-            commit_url += '<a href="#">' + item.commit.message + '</a>';
+            commit_url += '<a href="' + commit_view_url + '">';
+            commit_url += item.commit.message + '</a>';
 
             glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
 
