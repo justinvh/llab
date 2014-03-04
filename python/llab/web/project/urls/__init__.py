@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url, include
 
-urlpatterns = patterns('',
-    url(r'^', include('project.urls.project')),
+from .project import urlpatterns
+
+urlpatterns += patterns('',
     url(r'^', include('project.urls.commit', namespace='commit'))
 )
