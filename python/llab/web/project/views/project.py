@@ -13,7 +13,7 @@ from llab.utils.request import post_or_none
 from llab.web.project.forms import ProjectForm
 from llab.web.project.models import Project, Commit
 
-from .helpers import get_commit_or_404, safe_markdown
+from .helpers import get_commit_or_404, safe_markdown, project_page_context
 
 
 @login_required
@@ -77,13 +77,8 @@ def project_view(request, owner, project, commit=None, path=None):
     else:
         path = project.name
 
-    context.update({'commit': commit,
-                    'branch_count': project.branches.count(),
-                    'commit_count': project.commits.count(),
-                    'contributor_count': project.contributors.count(),
-                    'tag_count': project.tags.count(),
-                    'current_path': path,
-                    'user_is_admin': project.is_admin(request.user)})
+    context.update(project_page_context(request, project))
+    context.update({'commit': commit, 'current_path': path})
 
     return render(request, 'project/view.html', context)
 

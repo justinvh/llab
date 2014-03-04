@@ -1,12 +1,15 @@
 from django import http
 from django.shortcuts import render
 
-from .helpers import get_commit_or_404
+from .helpers import get_commit_or_404, project_page_context
 
 
 def commit_view(request, owner, project, commit):
     commit = get_commit_or_404(owner, project, commit)
+    project = commit.project
+    owner = project.owner
     context = {'owner': owner, 'project': project, 'commit': commit}
+    context.update(project_page_context(request, project))
     return render(request, 'project/commit/view.html', context)
 
 

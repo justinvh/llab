@@ -25,3 +25,12 @@ def get_commit_or_404(owner, project, commit):
 def safe_markdown(content):
     content = force_unicode(content)
     return mark_safe(m.html(content, extensions=misaka_extensions))
+
+
+def project_page_context(request, project):
+    return {'branch_count': project.branches.count(),
+            'commit_count': project.commits.count(),
+            'contributor_count': project.contributors.count(),
+            'tag_count': project.tags.count(),
+            'user_is_admin': project.is_admin(request.user)}
+
