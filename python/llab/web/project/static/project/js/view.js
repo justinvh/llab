@@ -75,7 +75,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             // Construct the appropriate URL
             var kwargs = {'owner': owner, 'project': project,
                           'commit': commit, 'path': item.path};
-            var url = llab.resolve('project:file_for_commit', kwargs);
+            var url = llab.resolve('project:commit:raw', kwargs);
             var item_url = '<a href="' + url + '">' + item_name + '</a>';
 
             // Construct the appropriate glyph

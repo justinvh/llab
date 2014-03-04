@@ -25,11 +25,6 @@ urlpatterns = patterns('project.views.project',
     url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/fork$',
         'project_new', name='new'),
 
-    # View the owner's referenced project
-    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commit/'
-         r'(?P<commit>[\w]+)/$'),
-        'project_view', name='commit'),
-
     # View a readme for a particular directory
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/readme/'
          r'(?P<commit>[\w]+)/(?P<directory>[\w\/-]+)$'),
