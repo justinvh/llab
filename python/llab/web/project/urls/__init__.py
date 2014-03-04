@@ -1,4 +1,6 @@
-from .commit import urlpatterns as commit_urlpatterns
-from .project import urlpatterns as project_urlpatterns
+from django.conf.urls import patterns, url, include
 
-urlpatterns = commit_urlpatterns + project_urlpatterns
+urlpatterns = patterns('',
+    url(r'^', include('project.urls.project')),
+    url(r'^', include('project.urls.commit', namespace='commit'))
+)

@@ -351,7 +351,7 @@ class Commit(models.Model):
             owner = project.organization.name
         kwds = {'owner': owner, 'project': project.name,
                 'commit': self.sha1sum}
-        return reverse('project:commit', kwargs=kwds)
+        return reverse('project:commit:view', kwargs=kwds)
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.short_sha1sum(), self.project)
