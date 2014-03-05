@@ -5,7 +5,7 @@ from .helpers import get_commit_or_404, project_page_context
 
 
 def commit_view(request, owner, project, commit):
-    commit = get_commit_or_404(owner, project, commit)
+    commit = get_commit_or_404(owner, project, commit, try_hard=True)
     project = commit.project
     owner = project.owner
     context = {'owner': owner, 'project': project, 'commit': commit}

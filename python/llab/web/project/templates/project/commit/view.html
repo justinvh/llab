@@ -107,7 +107,7 @@
             {{ commit.message }}
             <br>
             {% gravatar commit.author.gravatar 16 g %}
-            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.created|naturaltime }}
+            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
               on <a href="#">{{ commit.short_sha1sum }}</a></span>
           </div>
           <table class="table table-hover table-condensed table-bordered table-striped">

@@ -216,7 +216,7 @@ class Project(models.Model):
 
     def post_receive_commit(self, old_rev, new_rev, refname):
         proj = self
-        return Commit.create_from_sha(proj, old_rev, new_rev, refname)
+        return Commit.create_from_sha(proj, new_rev, refname)
 
     def post_receive_action(self, klass, action, *args, **kwargs):
         template = 'project/activity-feed/{}-{}.html'.format(klass, action)
@@ -253,7 +253,6 @@ class Commit(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     commit_time = models.DateTimeField()
     sha1sum = models.CharField(max_length=60, db_index=True)
-    parents = models.ManyToManyField('Commit', related_name='+')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
                                related_name='author_for_commits')
     author_email = models.EmailField()
@@ -264,6 +263,9 @@ class Commit(models.Model):
     committer_name = models.CharField(max_length=256)
     committer_email = models.EmailField()
     message = models.TextField()
+
+    # A list of parents
+    parents = JSONField()
 
     # The diffs of the commit
     diff = JSONField()
@@ -297,44 +299,28 @@ class Commit(models.Model):
     @staticmethod
     def get_or_create_from_sha(project, rev, refname):
         try:
-            logger.info('Searching for existing {}'.format(rev))
             commit = Commit.objects.filter(project=project, sha1sum=rev)
-            return [commit.latest('id')]
+            return commit.latest('id')
         except Commit.DoesNotExist:
-            logger.info('Not found, creating')
-            rev_commit = project.git.commit(rev)
-            old_rev = '0000000'
-            if rev_commit.parents:
-                parents = []
-                for parent in rev_commit.parents:
-                    logger.info('Processing oldrev parents {}'.format(parent))
-                    p = Commit.create_from_sha(project, old_rev, rev, refname)
-                    parents.append(p)
-                return parents
+            try:
+                rev_commit = project.git.commit(rev)
+                return Commit.create_from_sha(project, rev, refname)
+            except KeyError as e:
+                raise Commit.DoesNotExist(e)
 
     @staticmethod
-    def create_from_sha(project, old_rev, new_rev, refname):
+    def create_from_sha(project, new_rev, refname, recursive=False):
         from account.models import User
         new_rev_commit = project.git.commit(new_rev)
 
         # Extract the project tree and diffs
         diff = []
         tree = project.git.revtree(sha=new_rev)
-        parents = []
-        if not old_rev.startswith('0000000'):
-            diff = project.git.difflist(old_rev, new_rev)
-            # Ensure that the previous commit actually exists
-            parent = Commit.get_or_create_from_sha(project, old_rev, refname)
-            parents.extend(parent)
-        else:
-            for rev_parent in new_rev_commit.parents:
-                parent = Commit.get_or_create_from_sha(
-                    project, rev_parent, refname)
-                if parent:
-                    parents.extend(parent)
-            if new_rev_commit.parents:
-                for parent in new_rev_commit.parents:
-                    diff.extend(project.git.difflist(parent, new_rev))
+        parents = [p for p in new_rev_commit.parents]
+
+        if new_rev_commit.parents:
+            for parent in new_rev_commit.parents:
+                diff.extend(project.git.difflist(parent, new_rev))
 
         # Extract formatted author details
         new_author = new_rev_commit.author
@@ -360,7 +346,7 @@ class Commit(models.Model):
         commit_time = utc.localize(fts(commit_time))
 
         # The actual Commit object is fairly heavy
-        commit = Commit.objects.create(
+        return Commit.objects.create(
             commit_time=commit_time,
             sha1sum=new_rev_commit.sha().hexdigest(),
             author=author,
@@ -374,13 +360,8 @@ class Commit(models.Model):
             diff=diff,
             tree=tree,
             branch=branch,
+            parents=parents,
             project=project)
-
-        for parent in parents:
-            if parent:
-                commit.parents.add(parent)
-
-        return commit
 
     def get_absolute_url(self):
         project = self.project

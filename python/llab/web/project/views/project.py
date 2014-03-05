@@ -58,11 +58,11 @@ def project_view(request, owner, project, commit=None, path=None):
             sha1sum, branch = commit, commit
             q = (Q(project=project) &
                  (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
-            commit = Commit.objects.filter(q).latest('id')
+            commit = Commit.objects.filter(q).latest('commit_time')
         except Commit.DoesNotExist:
             raise http.Http404('Commit or branch does not exist')
     else:
-        commit = project.commits.latest('id')
+        commit = project.commits.latest('commit_time')
 
     if path:
         tree = commit.tree
