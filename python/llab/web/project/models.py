@@ -291,6 +291,20 @@ class Commit(models.Model):
         return content, content_type
 
     @staticmethod
+    def get_or_create_from_sha(project, rev, refname):
+        try:
+            print('Searching for existing {}'.format(rev))
+            commit = Commit.objects.filter(project=project, sha1sum=rev)
+            return commit.latest('id')
+        except Commit.DoesNotExist:
+            print('Not found, creating')
+            rev_commit = project.git.commit(rev)
+            old_rev = '0000000'
+            if rev_commit.parents:
+                old_rev = rev_commit.parents[0]
+            return Commit.create_from_sha(project, old_rev, rev, refname)
+
+    @staticmethod
     def create_from_sha(project, old_rev, new_rev, refname):
         from account.models import User
         new_rev_commit = project.git.commit(new_rev)
@@ -298,8 +312,13 @@ class Commit(models.Model):
         # Extract the project tree and diffs
         diff = []
         tree = project.git.revtree(sha=new_rev)
+        parent = None
         if not old_rev.startswith('0000000'):
+            print('Finding parent to {}'.format(new_rev))
             diff = project.git.difflist(old_rev, new_rev)
+            # Ensure that the previous commit actually exists
+            parent = Commit.get_or_create_from_sha(project, old_rev, refname)
+            print('Parent is {}'.format(parent))
 
         # Extract formatted author details
         new_author = new_rev_commit.author
@@ -325,7 +344,7 @@ class Commit(models.Model):
         commit_time = utc.localize(fts(commit_time))
 
         # The actual Commit object is fairly heavy
-        return Commit.objects.create(
+        commit = Commit.objects.create(
             commit_time=commit_time,
             sha1sum=new_rev_commit.sha().hexdigest(),
             author=author,
@@ -340,6 +359,11 @@ class Commit(models.Model):
             tree=tree,
             branch=branch,
             project=project)
+
+        if parent:
+            commit.parents.add(parent)
+
+        return commit
 
     class Meta:
         unique_together = ('project', 'sha1sum')
