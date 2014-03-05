@@ -330,7 +330,8 @@ class Commit(models.Model):
             for rev_parent in new_rev_commit.parents:
                 parent = Commit.get_or_create_from_sha(
                     project, rev_parent, refname)
-                parents.extend(parent)
+                if parent:
+                    parents.extend(parent)
             if new_rev_commit.parents:
                 for parent in new_rev_commit.parents:
                     diff.extend(project.git.difflist(parent, new_rev))
