@@ -2,6 +2,7 @@ import os
 import datetime
 import socket
 import mimetypes
+import logging
 
 import pytz
 
@@ -21,6 +22,9 @@ from llab.utils.request import notify_users
 from organization.models import Organization
 
 from json_field import JSONField
+
+
+logger = logging.getLogger(__name__)
 
 
 class Project(models.Model):
@@ -293,16 +297,20 @@ class Commit(models.Model):
     @staticmethod
     def get_or_create_from_sha(project, rev, refname):
         try:
-            print('Searching for existing {}'.format(rev))
+            logger.info('Searching for existing {}'.format(rev))
             commit = Commit.objects.filter(project=project, sha1sum=rev)
-            return commit.latest('id')
+            return [commit.latest('id')]
         except Commit.DoesNotExist:
-            print('Not found, creating')
+            logger.info('Not found, creating')
             rev_commit = project.git.commit(rev)
             old_rev = '0000000'
             if rev_commit.parents:
-                old_rev = rev_commit.parents[0]
-            return Commit.create_from_sha(project, old_rev, rev, refname)
+                parents = []
+                for parent in rev_commit.parents:
+                    logger.info('Processing oldrev parents {}'.format(parent))
+                    p = Commit.create_from_sha(project, old_rev, rev, refname)
+                    parents.append(p)
+                return parents
 
     @staticmethod
     def create_from_sha(project, old_rev, new_rev, refname):
@@ -312,13 +320,20 @@ class Commit(models.Model):
         # Extract the project tree and diffs
         diff = []
         tree = project.git.revtree(sha=new_rev)
-        parent = None
+        parents = []
         if not old_rev.startswith('0000000'):
-            print('Finding parent to {}'.format(new_rev))
             diff = project.git.difflist(old_rev, new_rev)
             # Ensure that the previous commit actually exists
             parent = Commit.get_or_create_from_sha(project, old_rev, refname)
-            print('Parent is {}'.format(parent))
+            parents.extend(parent)
+        else:
+            for rev_parent in new_rev_commit.parents:
+                parent = Commit.get_or_create_from_sha(
+                    project, rev_parent, refname)
+                parents.extend(parent)
+            if new_rev_commit.parents:
+                for parent in new_rev_commit.parents:
+                    diff.extend(project.git.difflist(parent, new_rev))
 
         # Extract formatted author details
         new_author = new_rev_commit.author
@@ -360,13 +375,11 @@ class Commit(models.Model):
             branch=branch,
             project=project)
 
-        if parent:
-            commit.parents.add(parent)
+        for parent in parents:
+            if parent:
+                commit.parents.add(parent)
 
         return commit
-
-    class Meta:
-        unique_together = ('project', 'sha1sum')
 
     def get_absolute_url(self):
         project = self.project
