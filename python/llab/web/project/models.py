@@ -216,7 +216,18 @@ class Project(models.Model):
 
     def post_receive_commit(self, old_rev, new_rev, refname):
         proj = self
-        return Commit.create_from_sha(proj, new_rev, refname)
+        all_commits = set(proj.git.commits(sha_only=True, branch=refname))
+        db_commits = Commit.objects.filter(project=self)
+        db_commits = set(db_commits.values_list('sha1sum', flat=True))
+        need_to_create = all_commits.difference(db_commits)
+        stageable = []
+        branch, _ = Branch.objects.get_or_create(project=self, name=refname)
+        for sha in need_to_create:
+            print('Creating {}'.format(sha))
+            commit = Commit.create_from_sha(proj, sha, branch, create=False)
+            stageable.append(commit)
+        print('Bulk creating {}'.format(stageable))
+        Commit.objects.bulk_create(stageable)
 
     def post_receive_action(self, klass, action, *args, **kwargs):
         template = 'project/activity-feed/{}-{}.html'.format(klass, action)
@@ -268,14 +279,32 @@ class Commit(models.Model):
     parents = JSONField()
 
     # The diffs of the commit
-    diff = JSONField()
+    _diff = JSONField()
 
     # The current tree as of this commit
-    tree = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
+    _tree = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
 
     # The related branch and project for this commit
     branch = models.ForeignKey(Branch, related_name='commits')
     project = models.ForeignKey(Project, related_name='commits')
+
+    @property
+    def tree(self):
+        if not self._tree:
+            self._tree = self.project.git.revtree(sha=self.sha1sum)
+            self.save()
+        return self._tree
+
+    @property
+    def diff(self):
+        if not self._diff:
+            commit = self.project.git.commit(self.sha1sum)
+            diff = []
+            for parent in commit.parents:
+                diff.extend(self.project.git.difflist(parent, self.sha1sum))
+            self._diff = diff
+            self.save()
+        return self._diff
 
     def short_message(self):
         return self.message.split('\n')[0]
@@ -303,24 +332,18 @@ class Commit(models.Model):
             return commit.latest('id')
         except Commit.DoesNotExist:
             try:
-                rev_commit = project.git.commit(rev)
+                project.git.commit(rev)
                 return Commit.create_from_sha(project, rev, refname)
             except KeyError as e:
                 raise Commit.DoesNotExist(e)
 
     @staticmethod
-    def create_from_sha(project, new_rev, refname, recursive=False):
+    def create_from_sha(project, new_rev, refname_or_branch, create=True):
         from account.models import User
         new_rev_commit = project.git.commit(new_rev)
 
         # Extract the project tree and diffs
-        diff = []
-        tree = project.git.revtree(sha=new_rev)
         parents = [p for p in new_rev_commit.parents]
-
-        if new_rev_commit.parents:
-            for parent in new_rev_commit.parents:
-                diff.extend(project.git.difflist(parent, new_rev))
 
         # Extract formatted author details
         new_author = new_rev_commit.author
@@ -333,7 +356,12 @@ class Commit(models.Model):
         committer, committer_name, committer_email = committer_info
 
         # Branch fetching
-        branch, _ = Branch.objects.get_or_create(project=project, name=refname)
+        if not isinstance(refname_or_branch, str):
+            branch = refname_or_branch
+        else:
+            n = refname_or_branch
+            branch, _ = Branch.objects.get_or_create(project=project, name=n)
+
         fts = datetime.datetime.utcfromtimestamp
         utc = pytz.timezone('UTC')
 
@@ -346,22 +374,25 @@ class Commit(models.Model):
         commit_time = utc.localize(fts(commit_time))
 
         # The actual Commit object is fairly heavy
-        return Commit.objects.create(
-            commit_time=commit_time,
-            sha1sum=new_rev_commit.sha().hexdigest(),
-            author=author,
-            author_name=author_name,
-            author_email=author_email,
-            author_time=author_time,
-            committer=committer,
-            committer_name=committer_name,
-            committer_email=committer_email,
-            message=new_rev_commit.message,
-            diff=diff,
-            tree=tree,
-            branch=branch,
-            parents=parents,
-            project=project)
+        c = Commit(commit_time=commit_time,
+                   sha1sum=new_rev_commit.sha().hexdigest(),
+                   author=author,
+                   author_name=author_name,
+                   author_email=author_email,
+                   author_time=author_time,
+                   committer=committer,
+                   committer_name=committer_name,
+                   committer_email=committer_email,
+                   message=new_rev_commit.message,
+                   diff=[],
+                   tree=[],
+                   branch=branch,
+                   parents=parents,
+                   project=project)
+
+        if create:
+            c.save()
+        return c
 
     def get_absolute_url(self):
         project = self.project

@@ -193,6 +193,22 @@ class Git(object):
 
         return ordered_tree
 
+    def branches(self):
+        refs = self.repo.refs.as_dict()
+        rkey = 'refs/heads/'
+        return {k: v for k, v in refs.iteritems() if k.startswith(rkey)}
+
+    def commits(self, sha_only=False, branch='master'):
+        refs = self.repo.refs.as_dict()
+        ref = refs.get(branch, refs.get('refs/heads/' + branch, None))
+        if not ref:
+            raise KeyError(branch)
+        for commit in self.repo.revision_history(ref):
+            if sha_only:
+                yield commit.sha().hexdigest()
+            else:
+                yield commit
+
     def difflist(self, old_rev, new_rev):
         r = self.repo
         store = r.object_store
