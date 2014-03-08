@@ -10,6 +10,7 @@ from collections import OrderedDict
 from dulwich.index import Index
 from dulwich.objects import S_ISGITLINK
 from dulwich.patch import is_binary
+from dulwich.walk import Walker
 from difflib import SequenceMatcher
 
 
@@ -124,7 +125,7 @@ class Git(object):
             # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
             for change in walker.changes():
-                if not hasattr(change, 'new'):
+                if not change.new:
                     continue
 
                 path = change.new.path
@@ -203,7 +204,8 @@ class Git(object):
         ref = refs.get(branch, refs.get('refs/heads/' + branch, None))
         if not ref:
             raise KeyError(branch)
-        for commit in self.repo.revision_history(ref):
+        for walker in Walker(self.repo, include=[ref]):
+            commit = walker.commit
             if sha_only:
                 yield commit.sha().hexdigest()
             else:
