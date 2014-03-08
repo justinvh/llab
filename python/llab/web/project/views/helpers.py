@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
-from llab.web.project.models import Project, Commit
+from llab.web.project.models import Project, Commit, Branch
 
 misaka_extensions = m.EXT_FENCED_CODE
 
@@ -29,9 +29,10 @@ def safe_markdown(content):
     return mark_safe(m.html(content, extensions=misaka_extensions))
 
 
-def project_page_context(request, project):
+def project_page_context(request, project, branch='refs/heads/master'):
+    branch = Branch.objects.get(project=project, name=branch)
     return {'branch_count': project.branches.count(),
-            'commit_count': project.commits.count(),
+            'commit_count': branch.commit_count,
             'contributor_count': project.contributors.count(),
             'tag_count': project.tags.count(),
             'user_is_admin': project.is_admin(request.user)}
