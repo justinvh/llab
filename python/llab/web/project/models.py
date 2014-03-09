@@ -291,6 +291,8 @@ class Commit(models.Model):
         items = self.message.split('\n')[1:]
         items_len = len(items)
         for i, item in enumerate(items, start=1):
+            if not item.strip():
+                continue
             if i == items_len:
                 yield item
             else:

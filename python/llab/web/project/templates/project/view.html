@@ -24,7 +24,7 @@
       <span class="glyphicon glyphicon-book"></span>
       </small>
       <a href="#">{{ project.owner.username }}</a> /
-      <strong><a href="#">{{ project.name }}</a></strong>
+      <strong><a href="{{ project.get_absolute_url }}">{{ project.name }}</a></strong>
     </h3>
 
     <hr>
@@ -106,9 +106,12 @@
         </h4>
         <div class="panel panel-primary">
           <div class="panel-body">
-            <pre><strong>{{ commit.message_header }}</strong>{% if commit.message_body %}{% for line in commit.message_body %}{{ line }}{% endfor %}{% else %}
-            <br>
-            {% endif %}</pre>
+            <h4>{{ commit.message_header }}</h4>
+            {% for line in commit.message_body %}
+            {% if forloop.first %}<p class="gray-light">{% endif %}
+            {{ line }}<br>
+            {% if forloop.last %}</p>{% endif %}
+            {% endfor %}
             {% gravatar commit.author.gravatar 16 g %}
             <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
               on <a href="#">{{ commit.short_sha1sum }}</a></span>
