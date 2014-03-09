@@ -11,7 +11,7 @@ from django.db.models import Q
 from llab.utils.request import post_or_none
 
 from llab.web.project.forms import ProjectForm
-from llab.web.project.models import Project, Commit
+from llab.web.project.models import Project, Commit, Branch
 
 from .helpers import get_commit_or_404, safe_markdown, project_page_context
 
@@ -54,13 +54,17 @@ def project_view(request, owner, project, commit=None, path=None):
         return render(request, 'project/view-empty.html', context)
 
     if commit:
+        sha1sum, branch = commit, commit
         try:
-            sha1sum, branch = commit, commit
-            q = (Q(project=project) &
-                 (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
+            q = Q(project=project, sha1sum=sha1sum)
             commit = Commit.objects.filter(q).latest('commit_time')
         except Commit.DoesNotExist:
-            raise http.Http404('Commit or branch does not exist')
+            try:
+                q = Q(project=project, name=branch)
+                branch = Branch.objects.filter(q)
+                commit = branch.ref
+            except Branch.DoesNotExist:
+                raise http.Http404('Commit or branch does not exist')
     else:
         commit = project.commits.latest('commit_time')
 

@@ -211,6 +211,12 @@ class Git(object):
             else:
                 yield commit
 
+    def commit_count(self, branch):
+        return len(list(self.commits(branch=branch)))
+
+    def last_commit(self, sha_only=False, branch='master'):
+        return next(self.commits(sha_only=sha_only, branch=branch))
+
     def difflist(self, old_rev, new_rev):
         r = self.repo
         store = r.object_store

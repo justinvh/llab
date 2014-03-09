@@ -11,17 +11,15 @@ from llab.web.project.models import Project, Commit, Branch
 misaka_extensions = m.EXT_FENCED_CODE
 
 
-def get_commit_or_404(owner, project, commit, try_hard=False):
+def get_commit_or_404(owner, project, sha1sum, try_hard=False):
     project = get_object_or_404(Project, name=project, owner__username=owner)
     try:
-        sha1sum, branch = commit, commit
-        q = (Q(project=project) &
-            (Q(sha1sum=sha1sum) | Q(branch__name__endswith=branch)))
+        q = Q(project=project, sha1sum=sha1sum)
         return Commit.objects.filter(q).latest('commit_time')
     except Commit.DoesNotExist:
         if not try_hard:
-            raise http.Http404('Commit or branch does not exist')
-        return Commit.get_or_create_from_sha(project, commit, '?')
+            raise http.Http404('Commit does not exist')
+        return Commit.get_or_create_from_sha(project, sha1sum)
 
 
 def safe_markdown(content):
@@ -36,4 +34,3 @@ def project_page_context(request, project, branch='refs/heads/master'):
             'contributor_count': project.contributors.count(),
             'tag_count': project.tags.count(),
             'user_is_admin': project.is_admin(request.user)}
-
