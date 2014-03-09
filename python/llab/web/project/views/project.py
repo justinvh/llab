@@ -6,14 +6,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django import http
-from django.db.models import Q
 
 from llab.utils.request import post_or_none
 
 from llab.web.project.forms import ProjectForm
-from llab.web.project.models import Project, Commit, Branch
+from llab.web.project.models import Project
 
 from .helpers import get_commit_or_404, safe_markdown, project_page_context
+from .helpers import lookup_and_guess_commit
 
 
 @login_required
@@ -54,17 +54,9 @@ def project_view(request, owner, project, commit=None, path=None):
         return render(request, 'project/view-empty.html', context)
 
     if commit:
-        sha1sum, branch = commit, commit
-        try:
-            q = Q(project=project, sha1sum=sha1sum)
-            commit = Commit.objects.filter(q).latest('commit_time')
-        except Commit.DoesNotExist:
-            try:
-                q = Q(project=project, name=branch)
-                branch = Branch.objects.filter(q)
-                commit = branch.ref
-            except Branch.DoesNotExist:
-                raise http.Http404('Commit or branch does not exist')
+        commit = lookup_and_guess_commit(project, commit, try_hard=True)
+        if not commit:
+            raise http.Http404('{} was not found'.format(commit))
     else:
         commit = project.commits.latest('commit_time')
 

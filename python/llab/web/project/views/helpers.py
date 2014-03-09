@@ -11,15 +11,38 @@ from llab.web.project.models import Project, Commit, Branch
 misaka_extensions = m.EXT_FENCED_CODE
 
 
-def get_commit_or_404(owner, project, sha1sum, try_hard=False):
-    project = get_object_or_404(Project, name=project, owner__username=owner)
+def lookup_and_guess_commit(project, sha1sum, try_hard=False):
     try:
+        # First try to lookup by the existing commit in the project
         q = Q(project=project, sha1sum=sha1sum)
         return Commit.objects.filter(q).latest('commit_time')
     except Commit.DoesNotExist:
-        if not try_hard:
-            raise http.Http404('Commit does not exist')
-        return Commit.get_or_create_from_sha(project, sha1sum)
+        pass
+
+    try:
+        # If that doesn't work then create it
+        if try_hard:
+            return Commit.get_or_create_from_sha(project, sha1sum)
+    except KeyError:
+        pass
+
+    try:
+        # If that doesn't work then look up via a branch name
+        q = Q(project=project, name=sha1sum)
+        branch = Branch.objects.filter(q).latest('id')
+        return branch.ref
+    except Branch.DoesNotExist:
+        pass
+
+    return None
+
+
+def get_commit_or_404(owner, project, sha1sum, try_hard=False):
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    commit = lookup_and_guess_commit(project, sha1sum, try_hard)
+    if not commit:
+        raise http.Http404('{} was not found'.format(sha1sum))
+    return commit
 
 
 def safe_markdown(content):

@@ -284,6 +284,18 @@ class Commit(models.Model):
     def short_message(self):
         return self.message.split('\n')[0]
 
+    def message_header(self):
+        return self.short_message()
+
+    def message_body(self):
+        items = self.message.split('\n')[1:]
+        items_len = len(items)
+        for i, item in enumerate(items, start=1):
+            if i == items_len:
+                yield item
+            else:
+                yield item + '\n'
+
     def short_sha1sum(self):
         return self.sha1sum[:7]
 

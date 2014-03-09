@@ -106,8 +106,9 @@
         </h4>
         <div class="panel panel-primary">
           <div class="panel-body">
-            {{ commit.short_message }}
+            <pre><strong>{{ commit.message_header }}</strong>{% if commit.message_body %}{% for line in commit.message_body %}{{ line }}{% endfor %}{% else %}
             <br>
+            {% endif %}</pre>
             {% gravatar commit.author.gravatar 16 g %}
             <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
               on <a href="#">{{ commit.short_sha1sum }}</a></span>
