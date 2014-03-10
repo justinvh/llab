@@ -2,6 +2,7 @@ import time
 
 from django import http
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
 
 from .helpers import get_commit_or_404, project_page_context
 from llab.web.project.models import Project, Branch
@@ -10,9 +11,17 @@ from llab.utils.git import commit_as_dict
 
 
 def commit_list(request, owner, project, branch):
-    branch = 'refs/heads/' + branch
     project = get_object_or_404(Project, name=project, owner__username=owner)
-    branch = get_object_or_404(Branch, project=project, name=branch)
+
+    try:
+        # If that doesn't work then look up via a branch name
+        refname = branch
+        q = Q(project=project)
+        q &= (Q(name=refname) | Q(name='refs/heads/' + refname))
+        branch = Branch.objects.filter(q).latest('id')
+    except Branch.DoesNotExist:
+        raise http.Http404('Branch does not exist')
+
     project = branch.project
     owner = project.owner
 

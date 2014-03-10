@@ -130,7 +130,8 @@ class Project(models.Model):
         owner = self.owner.username
         if self.organization:
             owner = self.organization.name
-        kwds = {'owner': owner, 'project': self.name, 'branch': 'master'}
+        branch = self.branches.earliest('id')
+        kwds = {'owner': owner, 'project': self.name, 'branch': branch.name}
         return reverse('project:commit:list', kwargs=kwds)
 
     def get_absolute_path(self):

@@ -11,6 +11,11 @@ urlpatterns = patterns('project.views.commit',
 
     # List all the commits
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commits/'
+         r'(?P<branch>refs/heads/[\w]+)/$'),
+         'commit_list', name='list'),
+
+    # List all the commits
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commits/'
          r'(?P<branch>[\w]+)/$'),
          'commit_list', name='list'),
 
