@@ -285,7 +285,6 @@ class Commit(models.Model):
         diffs = []
         for parent in commit.parents:
             diff = self.project.git.difflist(self.sha1sum, parent)
-            print(diff)
             diffs.append(diff)
         self._diff = diffs
 

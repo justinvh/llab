@@ -4,13 +4,13 @@ import os
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 from django.conf import settings
 from django import http
-
 from llab.utils.request import post_or_none
 
 from llab.web.project.forms import ProjectForm
-from llab.web.project.models import Project
+from llab.web.project.models import Project, Branch
 
 from .helpers import get_commit_or_404, safe_markdown, project_page_context
 from .helpers import lookup_and_guess_commit
@@ -53,12 +53,22 @@ def project_view(request, owner, project, commit=None, path=None):
     if not project.commits.exists():
         return render(request, 'project/view-empty.html', context)
 
+    sha = commit
+
     if commit:
-        commit = lookup_and_guess_commit(project, commit, try_hard=True)
+        commit = lookup_and_guess_commit(project, sha, try_hard=True)
         if not commit:
             raise http.Http404('{} was not found'.format(commit))
     else:
         commit = project.commits.latest('commit_time')
+
+    try:
+        refname = sha or 'master'
+        q = Q(project=project)
+        q &= Q(name=refname) | Q(name='/refs/heads/' + refname)
+        branch = Branch.objects.filter(q).latest('id')
+    except Branch.DoesNotExist:
+        branch = project.branches.earliest('id')
 
     if path:
         tree = commit.tree
@@ -74,7 +84,7 @@ def project_view(request, owner, project, commit=None, path=None):
         path = project.name
 
     context.update(project_page_context(request, project))
-    context.update({'commit': commit, 'current_path': path})
+    context.update({'commit': commit, 'current_path': path, 'branch': branch})
 
     return render(request, 'project/view.html', context)
 

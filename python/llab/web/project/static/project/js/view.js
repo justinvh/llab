@@ -51,9 +51,13 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var prev_tree = [];
     var prev_tree_path = ['llab'];
     var curr_tree = ftree.tree;
-    var tree_path = 'tree/' + branch + '/';
+    var tree_path = 'tree/' + branch;
     var real_path = path;
     var initial_path = path.split('/');
+
+    if (window.location.toString().indexOf('tree') !== -1) {
+        tree_path = '';
+    }
 
     var build_tree = function (tree) {
         $tree.html('');

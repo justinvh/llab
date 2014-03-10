@@ -28,7 +28,7 @@
             </button>
             <ul class="dropdown-menu">
               {% for branch in project.branches.all %}
-              <li><a href="#">{{ branch.short_name }}</a></li>
+              <li><a href="{{ branch.get_absolute_url }}">{{ branch.short_name }}</a></li>
               {% endfor %}
             </ul>
           </div>
@@ -67,7 +67,7 @@
 <script>
   var project = "{{ project.name }}";
   var owner = "{{ project.owner.username }}";
-  var branch = "{{ commit.branch.short_name }}";
+  var branch = "{{ branch.name }}";
   var commit = "{{ commit.sha1sum }}";
   var path = "{{ current_path }}";
   llab.build_tree(project, owner, branch, commit, path);

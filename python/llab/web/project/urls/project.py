@@ -12,6 +12,11 @@ urlpatterns = patterns('project.views.project',
         'project_view', name='view'),
 
     # View the owner's referenced project
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/refs/heads/'
+         r'(?P<commit>[\w]+)/(?P<path>.*)$'),
+        'project_view', name='tree'),
+
+    # View the owner's referenced project
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
          r'(?P<commit>[\w]+)/(?P<path>.*)$'),
         'project_view', name='tree'),

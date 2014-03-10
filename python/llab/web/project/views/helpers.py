@@ -23,12 +23,14 @@ def lookup_and_guess_commit(project, sha1sum, try_hard=False):
         # If that doesn't work then create it
         if try_hard:
             return Commit.get_or_create_from_sha(project, sha1sum)
-    except KeyError:
+    except Commit.DoesNotExist:
         pass
 
     try:
         # If that doesn't work then look up via a branch name
-        q = Q(project=project, name=sha1sum)
+        refname = sha1sum
+        q = Q(project=project)
+        q &= (Q(name=refname) | Q(name='refs/heads/' + refname))
         branch = Branch.objects.filter(q).latest('id')
         return branch.ref
     except Branch.DoesNotExist:
