@@ -242,7 +242,7 @@ class Git(object):
 
         def content(mode, hexsha):
             if hexsha is None:
-                return '['
+                return ''
             elif S_ISGITLINK(mode):
                 return 'Submodule commit {}\n'.format(hexsha)
             else:
@@ -263,20 +263,26 @@ class Git(object):
                 'changes': []}
 
         for path, mode, sha in changes:
-            old_path, old_mode, old_sha = path[0], mode[0], sha[0]
-            new_path, new_mode, new_sha = path[1], mode[1], sha[1]
+            old_path, old_mode, old_sha = path[1], mode[1], sha[1]
+            new_path, new_mode, new_sha = path[0], mode[0], sha[0]
+            file_added = False
+            file_deleted = False
 
             if not old_path:
-                old_path = '/dev/null'
+                old_path = new_path
+                file_added = True
 
             if not new_path:
-                new_path = '/dev/null'
+                new_path = old_path
+                file_deleted = True
 
             # Construct our object entry
             entry = {'old_path': old_path,
                      'new_path': new_path,
                      'old_mode': old_mode,
                      'new_mode': new_mode,
+                     'file_added': file_added,
+                     'file_deleted': file_deleted,
                      'lines_added': 0,
                      'lines_deleted': 0,
                      'diff': []}
@@ -296,7 +302,7 @@ class Git(object):
                 # Diff the file for changes
                 new_lines = lines(new_content)
                 old_lines = lines(old_content)
-                diff, added, deleted = unified_diff(new_lines, old_lines)
+                diff, added, deleted = unified_diff(old_lines, new_lines)
                 entry['diff'] = diff
                 entry['lines_added'] += added
                 entry['lines_deleted'] += deleted
