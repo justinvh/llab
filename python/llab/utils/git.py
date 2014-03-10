@@ -296,7 +296,7 @@ class Git(object):
                 # Diff the file for changes
                 new_lines = lines(new_content)
                 old_lines = lines(old_content)
-                diff, added, deleted = unified_diff(old_lines, new_lines)
+                diff, added, deleted = unified_diff(new_lines, old_lines)
                 entry['diff'] = diff
                 entry['lines_added'] += added
                 entry['lines_deleted'] += deleted

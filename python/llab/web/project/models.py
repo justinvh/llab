@@ -284,7 +284,6 @@ class Commit(models.Model):
 
     @property
     def diff(self):
-        self.refresh_diff()
         if not self._diff:
             self.refresh_diff()
             self.save()
