@@ -7,6 +7,8 @@
 {% load project_extras %}
 
 {% block javascript %}
+<script src="{% static "project/js/3rd-party/humanize.js" %}"></script>
+<script src="{% static "project/js/view.js" %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -22,7 +24,7 @@
       <span class="glyphicon glyphicon-book"></span>
       </small>
       <a href="#">{{ project.owner.username }}</a> /
-      <strong><a href="#">{{ project.name }}</a></strong>
+      <strong><a href="{{ project.get_absolute_url }}">{{ project.name }}</a></strong>
     </h3>
 
     <hr>
@@ -103,22 +105,78 @@
           </span>
         </h4>
         <div class="panel panel-primary">
+          <div class='panel-heading clearfix'>
+            <div class='panel-title pull-left'>{{ commit.message_header }}</div>
+            <div class="btn-group pull-right">
+              <a href="#" class="btn btn-default btn-sm">Browse code</a>
+            </div>
+          </div>
           <div class="panel-body">
-            {{ commit.message }}
-            <br>
+            {% for line in commit.message_body %}
+            {% if forloop.first %}<p class="gray-light">{% endif %}
+            {{ line }}<br>
+            {% if forloop.last %}</p>{% endif %}
+            {% endfor %}
             {% gravatar commit.author.gravatar 16 g %}
-            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
-              on <a href="#">{{ commit.short_sha1sum }}</a></span>
+            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}</span>
+            <hr>
+            <h4>File Changes</h4>
+            <ul>
+              {% for item in commit.diff %}
+              {% for change in item.changes %}
+              <li><a href='#{{ change.new_path|slugify }}'>{{ change.new_path }}</a>
+                <span class="gray-light">
+                  with
+                  {{ change.lines_added }} line{{ change.lines_added|pluralize }} added and
+                  {{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.
+                </span>
+              </li>
+              {% endfor %}
+              {% endfor %}
+            </ul>
           </div>
-          <table class="table table-hover table-condensed table-bordered table-striped">
-            <tbody id="source-tree">
-            </tbody>
-          </table>
         </div>
-        <div id="readme" class="panel panel-primary">
-          <div id="readme-body" class="panel-body">
+        {% for item in commit.diff %}
+        {% for change in item.changes %}
+        <div id="{{ change.new_path|slugify }}" class="panel panel-default">
+          <div class='panel-heading clearfix'>
+            <div class='panel-title pull-left'>{{ change.new_path }}</div>
+            <div class="btn-group pull-right">
+              <a href="#" class="btn btn-default btn-sm">View</a>
+              <a href="#" class="btn btn-default btn-sm">Raw</a>
+              <a href="#" class="btn btn-default btn-sm">Blame</a>
+              <a href="#" class="btn btn-default btn-sm">History</a>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="progress">
+              <div class="progress-bar progress-bar-success"
+                style="width: {{ change.lines_added_ratio }}%"></div>
+              <div class="progress-bar progress-bar-danger"
+                style="width: {{ change.lines_deleted_ratio }}%"></div>
+            </div>
+            <small class="gray-light">
+              {{ change.lines_added }} line{{ change.lines_added|pluralize }} added.
+              {{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.
+            </small>
+            <table class="table table-hover table-bordered very-condensed">
+              {% for lineno, mode, line in change.diff %}
+              <tr class='{{ mode }} code'>
+                {% if mode == 'equal' or mode == 'insert' %}
+                <td class="lineno-1">{{ lineno }}</td>
+                <td class="lineno-2"></td>
+                {% else %}
+                <td class="lineno-1"></td>
+                <td class="lineno-2">{{ lineno }}</td>
+                {% endif %}
+                <td class='line'>{{ line }}</td>
+              </tr>
+              {% endfor %}
+            </table>
           </div>
         </div>
+        {% endfor %}
+        {% endfor %}
       </div>
 
       <div class="tab-pane" id="tab-commits">
@@ -179,6 +237,7 @@
   var owner = "{{ project.owner.username }}";
   var branch = "{{ commit.branch.short_name }}";
   var commit = "{{ commit.sha1sum }}";
+  var path = "{{ current_path }}";
 </script>
 
 {% endblock %}

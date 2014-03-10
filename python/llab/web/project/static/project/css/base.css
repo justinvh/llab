@@ -66,6 +66,68 @@
     text-decoration: underline;
 }
 
+.code,
 code {
-    white-space: pre;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+.monospace {
+    font-family: monospace;
+}
+
+.line-add {
+    color: green;
+}
+
+.line-remove {
+    color: red;
+}
+
+.very-condensed td,
+.very-condensed tr {
+    padding: 0 !important;
+    font-size: 100%;
+    border: 0 !important;
+}
+
+td.lineno-1 {
+    border: 1px solid #DDD !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    padding: 0 5px !important;
+}
+
+td.lineno-2 {
+    border: 1px solid #DDD !important;
+    border-left: 0 !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    padding: 0 5px !important;
+}
+
+tr.insert {
+    background-color: #dff0d8;
+    color: #5cb85c;
+}
+
+tr.insert td.line:before {
+    content: '+ ';
+}
+
+tr.delete {
+    background-color: #f2dede;
+    color: red;
+}
+
+tr.delete td.line:before {
+    content: '- ';
+}
+
+tr.equal td.line:before {
+    content: '  ';
+}
+
+td.line {
+    border: 0;
 }

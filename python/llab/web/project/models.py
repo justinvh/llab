@@ -266,18 +266,27 @@ class Commit(models.Model):
     @property
     def tree(self):
         if not self._tree:
-            self._tree = self.project.git.revtree(sha=self.sha1sum)
+            self.refresh_tree()
             self.save()
         return self._tree
 
+    def refresh_tree(self):
+        self._tree = self.project.git.revtree(sha=self.sha1sum)
+
+    def refresh_diff(self):
+        commit = self.project.git.commit(self.sha1sum)
+        diffs = []
+        for parent in commit.parents:
+            diff = self.project.git.difflist(self.sha1sum, parent)
+            print(diff)
+            diffs.append(diff)
+        self._diff = diffs
+
     @property
     def diff(self):
+        self.refresh_diff()
         if not self._diff:
-            commit = self.project.git.commit(self.sha1sum)
-            diff = []
-            for parent in commit.parents:
-                diff.extend(self.project.git.difflist(parent, self.sha1sum))
-            self._diff = diff
+            self.refresh_diff()
             self.save()
         return self._diff
 

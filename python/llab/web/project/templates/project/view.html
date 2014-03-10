@@ -105,8 +105,10 @@
           </span>
         </h4>
         <div class="panel panel-primary">
+          <div class='panel-heading clearfix'>
+            <div class='panel-title pull-left'>{{ commit.message_header }}</div>
+          </div>
           <div class="panel-body">
-            <h4>{{ commit.message_header }}</h4>
             {% for line in commit.message_body %}
             {% if forloop.first %}<p class="gray-light">{% endif %}
             {{ line }}<br>
@@ -114,7 +116,7 @@
             {% endfor %}
             {% gravatar commit.author.gravatar 16 g %}
             <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
-              on <a href="#">{{ commit.short_sha1sum }}</a></span>
+              on <a href="{{ commit.get_absolute_url }}">{{ commit.short_sha1sum }}</a></span>
           </div>
           <table class="table table-hover table-condensed table-bordered table-striped">
             <tbody id="source-tree">

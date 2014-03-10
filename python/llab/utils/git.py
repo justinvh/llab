@@ -34,25 +34,31 @@ def commit_as_dict(commit):
 
 def unified_diff(a, b, n=3):
     diff, added, deleted = [], 0, 0
+    line_offset = 0
     for g in SequenceMatcher(None, a, b).get_grouped_opcodes(n):
         i1, i2, j1, j2 = g[0][1], g[-1][2], g[0][3], g[-1][4]
+        diff.append(('', 'diff', ''))
         for tag, i1, i2, j1, j2 in g:
             if tag == 'equal':
                 for i, line in enumerate(a[i1:i2], start=i1):
-                    diff.append((i, ' ', line))
+                    diff.append((i + line_offset, 'equal', line))
                 continue
             if tag == 'replace' or tag == 'delete':
                 for i, line in enumerate(a[i1:i2], start=i1):
                     if not line[-1] == u'\n':
                         pass
-                    entry = (i, '-', line)
+                    if tag == 'delete':
+                        line_offset -= 1
+                    entry = (i, 'delete', line)
                     diff.append(entry)
                     deleted += 1
             if tag == 'replace' or tag == 'insert':
                 for i, line in enumerate(b[j1:j2], start=j1):
                     if not line[-1] == u'\n':
                         pass
-                    entry = (i, '+', line)
+                    if tag == 'insert':
+                        line_offset += 1
+                    entry = (i, 'insert', line)
                     diff.append(entry)
                     added += 1
     return diff, added, deleted
@@ -251,7 +257,9 @@ class Git(object):
         tree = {'stats': {'files_added': 0,
                           'files_deleted': 0,
                           'lines_added': 0,
-                          'lines_deleted': 0},
+                          'lines_deleted': 0,
+                          'lines_added_ratio': 0,
+                          'lines_deleted_ratio': 0},
                 'changes': []}
 
         for path, mode, sha in changes:
@@ -282,6 +290,8 @@ class Git(object):
                 entry['diff'] = msg.format(old_path, new_path)
                 entry['lines_added'] = 0
                 entry['lines_deleted'] = 0
+                entry['lines_added_ratio'] = 0
+                entry['lines_deleted_ratio'] = 0
             else:
                 # Diff the file for changes
                 new_lines = lines(new_content)
@@ -290,6 +300,12 @@ class Git(object):
                 entry['diff'] = diff
                 entry['lines_added'] += added
                 entry['lines_deleted'] += deleted
+                total = float(entry['lines_added'] + entry['lines_deleted'])
+                if total > 0:
+                    lines_added = entry['lines_added'] * 100.0
+                    lines_deleted = entry['lines_deleted'] * 100.0
+                    entry['lines_added_ratio'] = lines_added / total
+                    entry['lines_deleted_ratio'] = lines_deleted / total
 
             # Aggregate statistics
             tree['stats']['lines_added'] += entry['lines_added']
