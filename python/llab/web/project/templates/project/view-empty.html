@@ -6,20 +6,7 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-md-10 center-block no-float">
-    <h3>
-      <small class="gray-light pad-right-10">
-      {% if project.private %}
-      PRIVATE
-      {% else %}
-      PUBLIC
-      {% endif %}
-      <span class="glyphicon glyphicon-book"></span>
-      </small>
-      <a href="#">{{ project.owner.username }}</a> /
-      <strong><a href="#">{{ project.name }}</a></strong>
-    </h3>
-  </div>
+  {% include "project/header.html" %}
   <hr>
   <div class="col-md-8 center-block no-float">
     <h2>Create a new repository on the command line</h2>
@@ -34,7 +21,5 @@ git push -u origin master</pre>
     <pre>git remote add origin {{ project.get_private_clone_path }}
 git push -u origin master</pre>
   </div>
-
-    <h2>
 </div>
 {% endblock %}

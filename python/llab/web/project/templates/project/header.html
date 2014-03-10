@@ -1,0 +1,15 @@
+<h3>
+  <small class="gray-light pad-right-10">
+    {% if project.private %}
+    PRIVATE
+    {% else %}
+    PUBLIC
+    {% endif %}
+    <span class="glyphicon glyphicon-book"></span>
+  </small>
+  <a href="#">{{ project.owner.username }}</a> /
+  <strong><a href="{{ project.get_absolute_url }}">{{ project.name }}</a></strong>
+</h3>
+<hr>
+<h4 class="gray-light">{{ project.description }} - <a href="#">Edit</a></h4>
+<br>

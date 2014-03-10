@@ -14,25 +14,8 @@
 {% block content %}
 <div class="row">
   <div class="col-md-10 center-block no-float">
-    <h3>
-      <small class="gray-light pad-right-10">
-      {% if project.private %}
-      PRIVATE
-      {% else %}
-      PUBLIC
-      {% endif %}
-      <span class="glyphicon glyphicon-book"></span>
-      </small>
-      <a href="#">{{ project.owner.username }}</a> /
-      <strong><a href="{{ project.get_absolute_url }}">{{ project.name }}</a></strong>
-    </h3>
 
-    <hr>
-
-    <h4 class="gray-light">{{ project.description }} - <a href="#">Edit</a></h4>
-
-    <br>
-
+    {% include "project/header.html" %}
     {% include "project/nav.html" with source_active=True %}
 
     <div class="tab-content">
@@ -40,7 +23,7 @@
         <h4>
           <div class="btn-group">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-              <span class="glyphicon glyphicon-tree-conifer"></span> branch: {{ commit.branch.short_name }}
+              <span class="glyphicon glyphicon-tree-conifer"></span> branch: {{ branch.short_name }}
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
