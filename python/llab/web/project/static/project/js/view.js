@@ -12,16 +12,16 @@ llab.render_readme = function (owner, project, commit, directory) {
 
     if (url in llab.readme_cache) {
         $readme.show();
-        $body.html(llab.readme_cache[url]);
+        $body.html(llab.readme_cache[url]).show();
         return true;
     }
 
     $.get(url, function (content) {
         $readme.show();
-        $body.html(content);
+        $body.hide().html(content).fadeIn()
         llab.readme_cache[url] = content;
     }).fail(function () {
-        $readme.hide();
+        $readme.fadeOut();
     });
 };
 
@@ -161,7 +161,9 @@ llab.build_tree = function (project, owner, branch, commit, path) {
     var url = commit.length ? 'project:json_tree' : 'project:json_tree_branch';
     var kwargs = {'project': project, 'owner': owner,
                   'commit': commit_or_branch, 'path': path};
+    var $wait_prompt = $('#wait-prompt');
     llab.getJSON(url, kwargs, function (full_tree) {
         llab.build_from_tree(full_tree, project, owner, branch, commit, path);
+        $wait_prompt.hide();
     });
 };

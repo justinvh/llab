@@ -55,6 +55,14 @@
             <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
               on <a href="{{ commit.get_absolute_url }}">{{ commit.short_sha1sum }}</a></span>
           </div>
+          <div class='text-center text-info center-block' id='wait-prompt' style="width: 50%">
+              <h3>Working...</h3>
+              <div class="progress progress-striped active">
+                  <div class="progress-bar"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                      <span class="sr-only">100% Complete</span>
+                  </div>
+              </div>
+          </div>
           <table class="table table-hover table-condensed table-bordered table-striped">
             <tbody id="source-tree">
             </tbody>
