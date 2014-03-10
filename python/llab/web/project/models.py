@@ -392,6 +392,15 @@ class Commit(models.Model):
                 'commit': self.sha1sum}
         return reverse('project:commit:view', kwargs=kwds)
 
+    def get_absolute_tree_url(self):
+        project = self.project
+        owner = project.owner
+        if project.organization:
+            owner = project.organization.name
+        kwds = {'owner': owner, 'project': project.name,
+                'commit': self.sha1sum, 'path': ''}
+        return reverse('project:tree', kwargs=kwds)
+
     def __unicode__(self):
         return u'{} @ {}'.format(self.short_sha1sum(), self.project)
 
