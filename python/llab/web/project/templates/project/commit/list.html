@@ -33,7 +33,7 @@
 
     <br>
 
-    {% include "project/nav.html" with source_active=True %}
+    {% include "project/nav.html" with commit_active=True %}
 
     <div class="tab-content">
       <div class="tab-pane active" id="tab-source">
@@ -53,41 +53,50 @@
               <a href="#">{{ current_path }}</a> /
           </span>
         </h4>
-        <div class="panel panel-primary">
-          <div class='panel-heading clearfix'>
-            <div class='panel-title pull-left'>{{ commit.message_header }}</div>
+        {% for datetime, commits in timelines %}
+        <div class="panel panel-default">
+          <div class='panel-heading'>
+            <div class='panel-title'>{{ datetime }}</div>
           </div>
           <div class="panel-body">
-            {% for line in commit.message_body %}
-            {% if forloop.first %}<p class="gray-light">{% endif %}
-            {{ line }}<br>
-            {% if forloop.last %}</p>{% endif %}
+            {% for commit in commits %}
+            <div class="media condensed">
+              <a class="pull-left" href="#">
+                {% gravatar commit.author_email 48 g %}
+              </a>
+              <div class="btn-group pull-right">
+                <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha %}" class="btn btn-default btn-sm">
+                  View</a>
+                <a href="{% url "project:tree" project=project.name owner=project.owner.username commit=commit.sha path="" %}" class="btn btn-default btn-sm">
+                  Browse</a>
+              </div>
+              <div class="media-body">
+                <strong>{{ commit.message }}</strong>
+                <p class="gray-light">{{ commit.author }} authored {{ commit.commit_time|datetime|naturaltime }}.</p>
+              </div>
+            </div>
+            {% if not forloop.last %}
+            <hr>
+            {% endif %}
             {% endfor %}
-            {% gravatar commit.author.gravatar 16 g %}
-            <a href="#">{{ commit.author.username }}</a> <span class="gray-light">authored {{ commit.commit_time|naturaltime }}
-              on <a href="{{ commit.get_absolute_url }}">{{ commit.short_sha1sum }}</a></span>
-          </div>
-          <table class="table table-hover table-condensed table-bordered table-striped">
-            <tbody id="source-tree">
-            </tbody>
-          </table>
-        </div>
-        <div id="readme" class="panel panel-primary">
-          <div id="readme-body" class="panel-body">
           </div>
         </div>
+        {% endfor %}
+        <ul class="pager">
+          {% if has_prev %}
+          <li class="previous"><a href="?page={{ prev_page }}">&larr; Previous</a></li>
+          {% else %}
+          <li class="disabled previous"><a href="#">&larr; Previous</a></li>
+          {% endif %}
+
+          {% if has_next %}
+          <li class="next"><a href="?page={{ next_page }}">Next &rarr;</a></li>
+          {% else %}
+          <li class="disabled next"><a href="#">Next &rarr;</a></li>
+          {% endif %}
+        </ul>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-  var project = "{{ project.name }}";
-  var owner = "{{ project.owner.username }}";
-  var branch = "{{ commit.branch.short_name }}";
-  var commit = "{{ commit.sha1sum }}";
-  var path = "{{ current_path }}";
-  llab.build_tree(project, owner, branch, commit, path);
-</script>
-
 {% endblock %}

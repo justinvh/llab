@@ -126,6 +126,13 @@ class Project(models.Model):
         kwds = {'owner': owner, 'project': self.name}
         return reverse('project:view', kwargs=kwds)
 
+    def get_absolute_commit_list_url(self):
+        owner = self.owner.username
+        if self.organization:
+            owner = self.organization.name
+        kwds = {'owner': owner, 'project': self.name, 'branch': 'master'}
+        return reverse('project:commit:list', kwargs=kwds)
+
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH
         return os.path.join(repo, self.full_name())

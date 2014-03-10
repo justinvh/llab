@@ -140,3 +140,11 @@ ul.change-list {
 ul.change-list li {
     list-style: none;
 }
+
+.media.condensed {
+  margin-top: 0;
+}
+
+.media.condensed + hr {
+  margin: 5px 0;
+}

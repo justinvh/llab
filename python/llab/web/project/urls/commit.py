@@ -9,6 +9,11 @@ from django.conf.urls import patterns, url
 # Commit related URL patterns
 urlpatterns = patterns('project.views.commit',
 
+    # List all the commits
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commits/'
+         r'(?P<branch>[\w]+)/$'),
+         'commit_list', name='list'),
+
     # View the details of a commit
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commit/'
          r'(?P<commit>[\w]+)/$'),

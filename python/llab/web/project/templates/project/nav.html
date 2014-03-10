@@ -1,0 +1,53 @@
+<ul class="nav nav-tabs">
+  <li{% if source_active %} class="active"{% endif %}>
+    <a href="{{ project.get_absolute_url }}">
+      <span class="glyphicon glyphicon-book"></span>
+      <strong>Source</strong>
+    </a>
+  </li>
+
+  <li{% if commit_active %} class="active"{% endif %}>
+    <a href="{{ project.get_absolute_commit_list_url }}">
+      <span class="glyphicon glyphicon-list"></span>
+      <strong>{{ commit_count }}</strong> Commit{{ commit_count|pluralize }}
+    </a>
+  </li>
+
+  <li{% if branch_active %} class="active"{% endif %}>
+    <a data-toggle="tab" href="#tab-branches">
+      <span class="glyphicon glyphicon-tree-conifer"></span>
+      <strong>{{ branch_count }}</strong> Branch{{ branch_count|pluralize:"es" }}
+    </a>
+  </li>
+
+  <li{% if tags_active %} class="active"{% endif %}>
+    <a data-toggle="tab" href="#tab-tags">
+      <span class="glyphicon glyphicon-calendar"></span>
+      <strong>{{ tag_count }}</strong> Tag{{ tag_count|pluralize }}
+    </a>
+  </li>
+
+  <li{% if contributors_active %} class="active"{% endif %}>
+    <a data-toggle="tab" href="#tab-contributors">
+      <span class="glyphicon glyphicon-globe"></span>
+      <strong>{{ contributor_count }}</strong> Contributor{{ contributor_count|pluralize }}
+    </a>
+  </li>
+
+  <li{% if issues_active %} class="active"{% endif %}>
+    <a data-toggle="tab" href="#tab-issues">
+      <span class="glyphicon glyphicon-wrench"></span>
+      0 Issues
+    </a>
+  </li>
+
+  {% if user_is_admin %}
+  <li{% if admin_active %} class="active"{% endif %}>
+    <a data-toggle="admin" href="#tab-issues">
+      <span class="glyphicon glyphicon-cog"></span>
+      Settings
+    </a>
+  </li>
+  {% endif %}
+</ul>
+
