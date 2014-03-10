@@ -362,11 +362,9 @@ class Commit(models.Model):
         utc = pytz.timezone('UTC')
 
         author_time = new_rev_commit.author_time
-        author_time -= new_rev_commit.author_timezone
         author_time = utc.localize(fts(author_time))
 
         commit_time = new_rev_commit.commit_time
-        commit_time -= new_rev_commit.commit_timezone
         commit_time = utc.localize(fts(commit_time))
 
         # The actual Commit object is fairly heavy
