@@ -65,7 +65,7 @@ def project_view(request, owner, project, commit=None, path=None):
         branch = None
         refname = sha or 'master'
         q = Q(project=project)
-        q &= Q(name=refname) | Q(name='/refs/heads/' + refname)
+        q &= Q(name=refname) | Q(name='refs/heads/' + refname)
         branch = Branch.objects.filter(q).latest('id')
     except Branch.DoesNotExist:
         if not sha or 'refs' in sha:
@@ -85,7 +85,11 @@ def project_view(request, owner, project, commit=None, path=None):
     else:
         path = project.name
 
-    context.update(project_page_context(request, project))
+    context.update(project_page_context(request, project, branch))
+
+    if not commit:
+        commit = branch.ref
+
     context.update({'commit': commit, 'current_path': path, 'branch': branch})
 
     return render(request, 'project/view.html', context)

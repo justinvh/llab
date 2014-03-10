@@ -157,9 +157,11 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
 };
 
 llab.build_tree = function (project, owner, branch, commit, path) {
+    var commit_or_branch = commit.length ? commit : branch;
+    var url = commit.length ? 'project:json_tree' : 'project:json_tree_branch';
     var kwargs = {'project': project, 'owner': owner,
-                  'commit': commit, 'path': path};
-    llab.getJSON('project:json_tree', kwargs, function (full_tree) {
+                  'commit': commit_or_branch, 'path': path};
+    llab.getJSON(url, kwargs, function (full_tree) {
         llab.build_from_tree(full_tree, project, owner, branch, commit, path);
     });
 };

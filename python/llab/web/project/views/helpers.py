@@ -52,8 +52,9 @@ def safe_markdown(content):
     return mark_safe(m.html(content, extensions=misaka_extensions))
 
 
-def project_page_context(request, project, branch='refs/heads/master'):
-    branch = Branch.objects.get(project=project, name=branch)
+def project_page_context(request, project, branch=None):
+    if branch is None:
+        branch = Branch.objects.filter(project=project).earliest('id')
     return {'branch_count': project.branches.count(),
             'commit_count': branch.commit_count,
             'contributor_count': project.contributors.count(),
