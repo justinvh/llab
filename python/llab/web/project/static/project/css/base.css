@@ -131,3 +131,12 @@ tr.equal td.line:before {
 td.line {
     border: 0;
 }
+
+ul.change-list {
+    margin-left: 25px;
+    padding: 0;
+}
+
+ul.change-list li {
+    list-style: none;
+}

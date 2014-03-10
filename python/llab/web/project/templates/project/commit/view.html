@@ -108,7 +108,7 @@
           <div class='panel-heading clearfix'>
             <div class='panel-title pull-left'>{{ commit.message_header }}</div>
             <div class="btn-group pull-right">
-              <a href="#" class="btn btn-default btn-sm">Browse code</a>
+              <a href="{{ commit.get_absolute_tree_url }} " class="btn btn-default btn-sm">Browse code</a>
             </div>
           </div>
           <div class="panel-body">
@@ -124,11 +124,19 @@
             <ul>
               {% for item in commit.diff %}
               {% for change in item.changes %}
-              <li><a href='#{{ change.new_path|slugify }}'>{{ change.new_path }}</a>
+              <li>
+                <a href='#{{ change.new_path|slugify }}'>{{ change.new_path }}</a>
                 <span class="gray-light">
+                  {% if change.file_deleted %}
+                  was deleted.
+                  {% elif change.file_added %}
+                  was added
+                  {% else %}
                   with
-                  {{ change.lines_added }} line{{ change.lines_added|pluralize }} added and
-                  {{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.
+                  {% if change.lines_added %}{{ change.lines_added }} line{{ change.lines_added|pluralize }} added.{% endif %}
+                  {% if change.lines_added and change.lines_deleted %}and{% endif %}
+                  {% if change.lines_deleted %}{{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.{% endif %}
+                  {% endif %}
                 </span>
               </li>
               {% endfor %}
@@ -138,11 +146,14 @@
         </div>
         {% for item in commit.diff %}
         {% for change in item.changes %}
-        <div id="{{ change.new_path|slugify }}" class="panel panel-default">
+        <div id="{{ change.new_path|slugify }}"
+          class="panel {% if change.file_added %}panel-success{% elif change.file_deleted %}panel-danger{% else %}panel-default{% endif %}">
           <div class='panel-heading clearfix'>
             <div class='panel-title pull-left'>{{ change.new_path }}</div>
             <div class="btn-group pull-right">
+              {% if not change.file_deleted %}
               <a href="#" class="btn btn-default btn-sm">View</a>
+              {% endif %}
               <a href="#" class="btn btn-default btn-sm">Raw</a>
               <a href="#" class="btn btn-default btn-sm">Blame</a>
               <a href="#" class="btn btn-default btn-sm">History</a>
@@ -155,10 +166,16 @@
               <div class="progress-bar progress-bar-danger"
                 style="width: {{ change.lines_deleted_ratio }}%"></div>
             </div>
+            {% if change.file_deleted %}
+            <small class="gray-light">File was deleted.</small>
+            {% elif change.file_added %}
+            <small class="gray-light">File was added.</small>
+            {% else %}
             <small class="gray-light">
-              {{ change.lines_added }} line{{ change.lines_added|pluralize }} added.
-              {{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.
+              {% if change.lines_added %}{{ change.lines_added }} line{{ change.lines_added|pluralize }} added.{% endif %}
+              {% if change.lines_deleted %}{{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.{% endif %}
             </small>
+            {% endif %}
             <table class="table table-hover table-bordered very-condensed">
               {% for lineno, mode, line in change.diff %}
               <tr class='{{ mode }} code'>
