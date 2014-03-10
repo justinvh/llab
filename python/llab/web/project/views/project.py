@@ -54,21 +54,23 @@ def project_view(request, owner, project, commit=None, path=None):
         return render(request, 'project/view-empty.html', context)
 
     sha = commit
+    commit = None
 
-    if commit:
+    if sha:
         commit = lookup_and_guess_commit(project, sha, try_hard=True)
         if not commit:
             raise http.Http404('{} was not found'.format(commit))
-    else:
-        commit = project.commits.latest('commit_time')
 
     try:
+        branch = None
         refname = sha or 'master'
         q = Q(project=project)
         q &= Q(name=refname) | Q(name='/refs/heads/' + refname)
         branch = Branch.objects.filter(q).latest('id')
     except Branch.DoesNotExist:
-        branch = project.branches.earliest('id')
+        if not sha or 'refs' in sha:
+            branch = project.branches.earliest('id')
+            commit = branch.ref
 
     if path:
         tree = commit.tree

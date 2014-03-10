@@ -23,7 +23,12 @@
         <h4>
           <div class="btn-group">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-              <span class="glyphicon glyphicon-tree-conifer"></span> branch: {{ branch.short_name }}
+              <span class="glyphicon glyphicon-tree-conifer"></span>
+              {% if branch %}
+              branch: {{ branch.short_name }}
+              {% else %}
+              commit: {{ commit.short_sha1sum }}
+              {% endif %}
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
@@ -67,7 +72,7 @@
 <script>
   var project = "{{ project.name }}";
   var owner = "{{ project.owner.username }}";
-  var branch = "{{ branch.name }}";
+  var branch = {% if branch %}"{{ branch.name }}"{% else %}null{% endif %};
   var commit = "{{ commit.sha1sum }}";
   var path = "{{ current_path }}";
   llab.build_tree(project, owner, branch, commit, path);

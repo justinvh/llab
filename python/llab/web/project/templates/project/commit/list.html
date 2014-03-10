@@ -39,7 +39,7 @@
                   Browse</a>
               </div>
               <div class="media-body">
-                <strong>{{ commit.message }}</strong>
+                <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha %}"><strong>{{ commit.message }}</strong></a>
                 <p class="gray-light">{{ commit.author }} authored {{ commit.commit_time|datetime|naturaltime }}.</p>
               </div>
             </div>
