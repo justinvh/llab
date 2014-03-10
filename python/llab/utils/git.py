@@ -130,43 +130,46 @@ class Git(object):
 
             # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
-            for change in walker.changes():
-                if not change.new:
-                    continue
+            for changes in walker.changes():
+                if not isinstance(changes, list):
+                    changes = [changes]
+                for change in changes:
+                    if not change.new:
+                        continue
 
-                path = change.new.path
-                if not path:
-                    seen.add(change.old.path)
-                    continue
+                    path = change.new.path
+                    if not path:
+                        seen.add(change.old.path)
+                        continue
 
-                if path in seen:
-                    continue
+                    if path in seen:
+                        continue
 
-                seen.add(path)
-                dirs, filename = os.path.split(path)
-                dirs = dirs.split('/') if len(dirs) else []
-                blob = change.new.sha
+                    seen.add(path)
+                    dirs, filename = os.path.split(path)
+                    dirs = dirs.split('/') if len(dirs) else []
+                    blob = change.new.sha
 
-                entry = {'commit': commit,
-                         'blob': blob,
-                         'type': 'file',
-                         'path': path,
-                         'tree': {}}
+                    entry = {'commit': commit,
+                            'blob': blob,
+                            'type': 'file',
+                            'path': path,
+                            'tree': {}}
 
-                # Construct a top-level descriptor
-                if not dirs:
-                    tree[filename] = entry
-                    continue
+                    # Construct a top-level descriptor
+                    if not dirs:
+                        tree[filename] = entry
+                        continue
 
-                # Construct a tree with all the parts
-                rel_tree = tree
-                for part in dirs:
-                    if not rel_tree.get(part):
-                        rel_tree[part] = {'commit': commit,
-                                          'type': 'folder',
-                                          'tree': {}}
-                    rel_tree = rel_tree[part]['tree']
-                rel_tree[filename] = entry
+                    # Construct a tree with all the parts
+                    rel_tree = tree
+                    for part in dirs:
+                        if not rel_tree.get(part):
+                            rel_tree[part] = {'commit': commit,
+                                            'type': 'folder',
+                                            'tree': {}}
+                        rel_tree = rel_tree[part]['tree']
+                    rel_tree[filename] = entry
 
         # Now reorganize the tree so when we display it then the tree
         # will display folder ABC -> files ABC
