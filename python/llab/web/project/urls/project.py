@@ -39,6 +39,15 @@ urlpatterns = patterns('project.views.project',
     url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/branches/$',
         'project_branches', name='branches'),
 
+    # List all the tags for a project
+    url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tags/$',
+        'project_tags', name='tags'),
+
+    # Download
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tag/'
+         r'(?P<tag>.*)/download/$'),
+        'project_download', name='download'),
+
     # View a readme for a particular directory
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/readme/'
          r'(?P<commit>[\w]+)/(?P<directory>[\w\/-]+)$'),

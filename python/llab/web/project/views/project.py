@@ -10,7 +10,7 @@ from django import http
 from llab.utils.request import post_or_none
 
 from llab.web.project.forms import ProjectForm
-from llab.web.project.models import Project, Branch
+from llab.web.project.models import Project, Branch, Tag
 
 from .helpers import get_commit_or_404, safe_markdown, project_page_context
 from .helpers import lookup_and_guess_commit
@@ -118,3 +118,21 @@ def project_branches(request, owner, project):
     context = {'project': project, 'owner': owner}
     context.update(project_page_context(request, project))
     return render(request, 'project/branches.html', context)
+
+
+def project_tags(request, owner, project):
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    context = {'project': project, 'owner': owner}
+    context.update(project_page_context(request, project))
+    return render(request, 'project/tags.html', context)
+
+
+def project_download(request, owner, project, tag):
+    fmt = request.GET.get('format', 'bzip2')
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    tag = get_object_or_404(Tag, project=project, name=tag)
+    name = tag.download_filename(fmt)
+    response = http.HttpResponse(content_type='application/x-bzip2')
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(name)
+    response.content = project.git.archive(tag.ref.sha1sum, fmt)
+    return response

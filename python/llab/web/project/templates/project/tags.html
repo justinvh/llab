@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+{% load gravatar %}
+{% load staticfiles %}
+{% load project_extras %}
+
+{% block javascript %}
+<script src="{% static "project/js/3rd-party/humanize.js" %}"></script>
+<script src="{% static "project/js/view.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 center-block no-float">
+
+    {% include "project/header.html" %}
+    {% include "project/nav.html" with tag_active=True %}
+
+    <div class="tab-content">
+      <br>
+      <div class="tab-pane active" id="tab-source">
+        <h3>Releases</h3>
+        <ul class="list-group">
+          {% for tag in project.tags.all %}
+          {% with commit=tag.ref %}
+          <li class="list-group-item">
+            <div class="pull-right">
+                <span class="glyphicon glyphicon-time"></span>
+                Released {{ tag.created|naturaltime }}.
+                <a href="{{ tag.get_absolute_download_url }}?format=bzip2">bzip2</a>,
+                <a href="{{ tag.get_absolute_download_url }}?format=gzip">gzip</a>
+            </div>
+
+            <span class="badge">{{ tag.downloaded }}</span>
+            <span class="gray-light">
+              <a href="{{ tag.get_absolute_download_url }}">
+                <span class="glyphicon glyphicon-floppy-save"></span>
+                {{ tag.project.name }}-{{ tag.short_name }}
+              </a>
+              at
+              <a href="{{ commit.get_absolute_url }}">{{ commit.short_sha1sum }}</a>
+            </span>
+          </li>
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

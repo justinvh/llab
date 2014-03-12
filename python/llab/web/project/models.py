@@ -112,17 +112,36 @@ class Project(models.Model):
     def branch_add(self, branch_name):
         template = 'project/activity-feed/branch-add.html'
         context = {'project': self, 'branch': branch_name}
-        notify_users(self.starred_by.all(), template, context)
+        users = self.notifiable_users()
+        notify_users(users, template, context)
 
-    def branch_remove(self, branch_name):
+    def branch_delete(self, branch_name):
         try:
             branch = self.branches.get(name=branch_name)
             branch.delete()
         except Branch.DoesNotExist:
             pass
-        template = 'project/activity-feed/branch-remove.html'
+        template = 'project/activity-feed/branch-delete.html'
         context = {'project': self, 'branch': branch_name}
-        notify_users(self.starred_by.all(), template, context)
+        users = self.notifiable_users()
+        notify_users(users, template, context)
+
+    def tag_add(self, tag_name):
+        template = 'project/activity-feed/tag-add.html'
+        context = {'project': self, 'tag': tag_name}
+        users = self.notifiable_users()
+        notify_users(users, template, context)
+
+    def tag_delete(self, tag_name):
+        try:
+            tag = self.tags.get(name=tag_name)
+            tag.delete()
+        except Tag.DoesNotExist:
+            pass
+        template = 'project/activity-feed/tag-delete.html'
+        context = {'project': self, 'tag': tag_name}
+        users = self.notifiable_users()
+        notify_users(users, template, context)
 
     def get_absolute_url(self):
         owner = self.owner.username
@@ -145,6 +164,13 @@ class Project(models.Model):
             owner = self.organization.name
         kwds = {'owner': owner, 'project': self.name}
         return reverse('project:branches', kwargs=kwds)
+
+    def get_absolute_tag_list_url(self):
+        owner = self.owner.username
+        if self.organization:
+            owner = self.organization.name
+        kwds = {'owner': owner, 'project': self.name}
+        return reverse('project:tags', kwargs=kwds)
 
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH
@@ -227,16 +253,32 @@ class Project(models.Model):
                    'project': self,
                    klass: name}
 
-        # Create the commit
-        if klass == 'branch':
-            self.post_receive_commit(old_rev, new_rev, refname)
-
         # Dispatch the action
         return self.post_receive_action(klass, action, **context)
 
-    def post_receive_commit(self, old_rev, new_rev, refname):
+    def post_receive_tag(self, action, old_rev, new_rev, refname):
+        if action == 'delete':
+            self.tag_delete(refname)
+            return
+
         project = self
         commit = Commit.create_from_sha(project, new_rev)
+
+        try:
+            tages = Tag.objects.filter(project=project, name=refname)
+            tag = tages.latest('id')
+        except Tag.DoesNotExist:
+            tag = Tag(project=project, name=refname, ref=commit)
+            tag.save()
+
+    def post_receive_commit(self, action, old_rev, new_rev, refname):
+        if action == 'delete':
+            self.branch_delete(refname)
+            return
+
+        project = self
+        commit = Commit.create_from_sha(project, new_rev)
+
         try:
             branches = Branch.objects.filter(project=project, name=refname)
             branch = branches.latest('id')
@@ -246,6 +288,14 @@ class Project(models.Model):
         branch.update_refs_and_stats()
 
     def post_receive_action(self, klass, action, *args, **kwargs):
+        refname = kwargs['refname']
+        old_rev, new_rev = kwargs['old_rev'], kwargs['new_rev']
+
+        if klass == 'branch':
+            self.post_receive_commit(action, old_rev, new_rev, refname)
+        elif klass == 'tag':
+            self.post_receive_tag(action, old_rev, new_rev, refname)
+
         template = 'project/activity-feed/{}-{}.html'.format(klass, action)
         cmd = '{}_{}_signal'.format(klass, action)
         users = self.notifiable_users()
@@ -466,7 +516,30 @@ class Branch(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     project = models.ForeignKey(Project, related_name='tags')
+    created = models.DateTimeField(auto_now_add=True)
     ref = models.ForeignKey(Commit, related_name='tags')
+
+    def short_name(self):
+        return self.name.split('/')[-1]
+
+    def download_filename(self, fmt='bzip2'):
+        fmts = {'bzip2': '.tar.bz2',
+                'gzip': '.tar.gz'}
+        fmt = fmts.get(fmt, 'bzip2')
+        name = '{}-{}{}'
+        return name.format(self.project.name, self.short_name(), fmt)
+
+    def get_absolute_download_url(self):
+        project = self.project
+        owner = project.owner
+        if project.organization:
+            owner = project.organization.name
+        name = self.name
+        kwds = {'owner': owner, 'project': project.name, 'tag': name}
+        return reverse('project:download', kwargs=kwds)
+
+    class Meta:
+        ordering = ('-id',)
 
     def __unicode__(self):
         return u'{}/{}'.format(self.project, self.name)

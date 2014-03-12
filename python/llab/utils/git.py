@@ -151,10 +151,10 @@ class Git(object):
                     blob = change.new.sha
 
                     entry = {'commit': commit,
-                            'blob': blob,
-                            'type': 'file',
-                            'path': path,
-                            'tree': {}}
+                             'blob': blob,
+                             'type': 'file',
+                             'path': path,
+                             'tree': {}}
 
                     # Construct a top-level descriptor
                     if not dirs:
@@ -166,8 +166,8 @@ class Git(object):
                     for part in dirs:
                         if not rel_tree.get(part):
                             rel_tree[part] = {'commit': commit,
-                                            'type': 'folder',
-                                            'tree': {}}
+                                              'type': 'folder',
+                                              'tree': {}}
                         rel_tree = rel_tree[part]['tree']
                     rel_tree[filename] = entry
 
@@ -374,3 +374,23 @@ class Git(object):
 
         """
         return Git(repo=repo)
+
+    def archive(self, commit, compress='bzip2'):
+        import subprocess
+        pipe = subprocess.PIPE
+        git_dir = self.repo.path
+        work_tree = self.repo.path
+
+        compress_methods = {'bzip2': ('bzip2',),
+                            'gzip': ('gzip', '-9')}
+        pipe_cmd = compress_methods.get(compress, 'bzip2')
+
+        # HACK(justinvh): Unless I am blind Dulwich does not support
+        #                 archiving repositories, so we use subprocess
+        #                 to pipe and return the results.
+        cmd = ('git', '--git-dir={}'.format(git_dir),
+               '--work-tree={}'.format(work_tree), 'archive', commit)
+        ps = subprocess.Popen(cmd, stdout=pipe)
+        output = subprocess.check_output(pipe_cmd, stdin=ps.stdout)
+        ps.wait()
+        return output
