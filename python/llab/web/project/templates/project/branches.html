@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+{% load gravatar %}
+{% load staticfiles %}
+{% load project_extras %}
+
+{% block javascript %}
+<script src="{% static "project/js/3rd-party/humanize.js" %}"></script>
+<script src="{% static "project/js/view.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 center-block no-float">
+
+    {% include "project/header.html" %}
+    {% include "project/nav.html" with branch_active=True %}
+
+    <div class="tab-content">
+      <br>
+      <div class="tab-pane active" id="tab-source">
+        {% for branch in project.branches.all %}
+        {% with commit=branch.ref %}
+        <div class="panel panel-info">
+          <div class='panel-heading'>
+            <div class='panel-title'>{{ branch.name }}</div>
+          </div>
+          <div class="panel-body">
+            <div class="media condensed">
+              <a class="pull-left" href="#">
+                {% gravatar commit.author_email 48 g %}
+              </a>
+              <div class="btn-group pull-right">
+                <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha1sum %}" class="btn btn-default btn-sm">
+                  View</a>
+                <a href="{% url "project:tree" project=project.name owner=project.owner.username commit=commit.sha1sum path="" %}" class="btn btn-default btn-sm">
+                  Browse</a>
+              </div>
+              <div class="media-body">
+                <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha1sum %}"><strong>{{ commit.message }}</strong></a>
+                <p class="gray-light">{{ commit.author }} authored {{ commit.commit_time|naturaltime }}.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

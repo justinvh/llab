@@ -14,7 +14,7 @@
   </li>
 
   <li{% if branch_active %} class="active"{% endif %}>
-    <a data-toggle="tab" href="#tab-branches">
+    <a href="{{ project.get_absolute_branch_list_url }}">
       <span class="glyphicon glyphicon-tree-conifer"></span>
       <strong>{{ branch_count }}</strong> Branch{{ branch_count|pluralize:"es" }}
     </a>

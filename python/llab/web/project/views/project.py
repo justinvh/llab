@@ -111,3 +111,10 @@ def project_readme(request, owner, project, commit, directory=""):
         except KeyError:
             continue
     raise http.Http404('A valid readme could not be found')
+
+
+def project_branches(request, owner, project):
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+    context = {'project': project, 'owner': owner}
+    context.update(project_page_context(request, project))
+    return render(request, 'project/branches.html', context)

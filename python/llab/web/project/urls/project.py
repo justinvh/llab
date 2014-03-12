@@ -32,14 +32,19 @@ urlpatterns = patterns('project.views.project',
         'project_tree', name='json_tree'),
 
     # Fork an existing project
-    url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/fork$',
+    url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/fork/$',
         'project_new', name='new'),
+
+    # List all the branches for a project
+    url(r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/branches/$',
+        'project_branches', name='branches'),
 
     # View a readme for a particular directory
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/readme/'
          r'(?P<commit>[\w]+)/(?P<directory>[\w\/-]+)$'),
         'project_readme', name='readme'),
 
+    # View a readme for a top-level commit
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/readme/'
          r'(?P<commit>[\w]+)/$'),
         'project_readme', name='readme_toplevel'),
