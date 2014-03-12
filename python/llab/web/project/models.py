@@ -256,17 +256,24 @@ class Project(models.Model):
         # Dispatch the action
         return self.post_receive_action(klass, action, **context)
 
-    def post_receive_tag(self, action, old_rev, new_rev, refname):
+    def post_receive_tag(self, action, old_rev, tag_rev, refname):
         if action == 'delete':
             self.tag_delete(refname)
             return
+
+        # Fetch the actual revision from the object
+        obj = self.git.repo[tag_rev]
+        if hasattr(obj, 'object'):
+            obj, new_rev = obj.object
+        else:
+            new_rev = obj.id
 
         project = self
         commit = Commit.create_from_sha(project, new_rev)
 
         try:
-            tages = Tag.objects.filter(project=project, name=refname)
-            tag = tages.latest('id')
+            tags = Tag.objects.filter(project=project, name=refname)
+            tag = tags.latest('id')
         except Tag.DoesNotExist:
             tag = Tag(project=project, name=refname, ref=commit)
             tag.save()
