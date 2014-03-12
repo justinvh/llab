@@ -115,6 +115,11 @@ class Project(models.Model):
         notify_users(self.starred_by.all(), template, context)
 
     def branch_remove(self, branch_name):
+        try:
+            branch = self.branches.get(name=branch_name)
+            branch.delete()
+        except Branch.DoesNotExist:
+            pass
         template = 'project/activity-feed/branch-remove.html'
         context = {'project': self, 'branch': branch_name}
         notify_users(self.starred_by.all(), template, context)
