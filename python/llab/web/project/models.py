@@ -493,8 +493,8 @@ class Branch(models.Model):
         self.commit_count = git.commit_count(self.name)
         last_commit = git.last_commit(branch=self.name, sha_only=True)
         if self.ref.sha1sum != last_commit:
-            commit = Commit.create_from_sha(self.project, last_commit)
-            self.commit = commit
+            ref = Commit.create_from_sha(self.project, last_commit)
+            self.ref = ref
         self.save()
 
     def get_absolute_url(self):
