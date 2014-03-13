@@ -15,9 +15,9 @@ from difflib import SequenceMatcher
 
 
 def commit_as_dict(commit):
-    start = commit.author.rfind('<')
+    start = commit.author.decode('utf-8').rfind('<')
     author_email = commit.author[start + 1:-1]
-    start = commit.committer.rfind('<')
+    start = commit.committer.decode('utf-8').rfind('<')
     committer_email = commit.committer[start + 1:-1]
 
     return {'author': commit.author,
@@ -98,18 +98,14 @@ class Git(object):
         update_refs_wrap = partial(update_refs, branch=branch)
         return client.send_pack(path, update_refs_wrap, pack_contents)
 
-    def lstree(self, sha=None):
-        store = self.repo.object_store
+    def lstree(self, sha=None, path_only=False):
         sha = sha or self.repo.head()
-        repo = self.repo
-        tree = repo[sha].tree
-        index = Index(self.repo.index_path())
-        changes = index.changes_from_tree(store, tree, want_unchanged=True)
-        for path, mode, sha in changes:
-            new_path = path[1]
-            if new_path:
-                yield ((path[0], mode[0], sha[0]),
-                       (path[1], mode[1], sha[1]))
+        t1 = self.repo[sha].tree
+        for entry in self.repo.object_store.iter_tree_contents(t1):
+            if path_only:
+                yield entry.path
+            else:
+                yield entry
 
     def commit_for_file(self, filename, sha=None):
         r = self.repo
