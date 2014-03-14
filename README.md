@@ -1,16 +1,7 @@
 llab
 ----
 
-`llab` is a lightweight Github clone. It is currently immature and completly
-in the development process, but you're more than welcome to try it out.
-
-Current development features and topics:
-
-    - Git SSH wrapper for managing users and dispatching commands
-    - SSH Key management with AES cipher and SHA1 verification
-    - Event streams with user and organizations
-    - Repository creation on the server side
-
+A lightweight lab for Git Development.
 
 Building
 --------
