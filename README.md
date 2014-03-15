@@ -3,6 +3,7 @@ llab
 
 A lightweight lab for Git Development.
 
+
 Building
 --------
 
@@ -14,3 +15,14 @@ Building
   $ pip install -r requirements
   $ source env.bash
   ```
+
+
+Server Side
+-----------
+
+You can run llab in two authentication modes.
+
+    - Customized OpenSSH Backend
+    - Flat authorized_users
+
+Each backend has their own benefit.
