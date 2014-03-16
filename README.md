@@ -3,6 +3,10 @@ llab
 
 A lightweight lab for Git Development.
 
+This project is trying to be a low-dependency Github-like clone. It is
+growing out of the efforts that I have seen needed in an industrial company
+where management of tasks and requirements is a bit more involved.
+
 
 Building
 --------
