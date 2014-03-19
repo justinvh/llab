@@ -106,10 +106,31 @@ class Git(object):
         index = Index(self.repo.index_path())
         changes = index.changes_from_tree(store, tree, want_unchanged=True)
         for path, mode, sha in changes:
-            new_path = path[1]
-            if new_path:
-                yield ((path[0], mode[0], sha[0]),
-                       (path[1], mode[1], sha[1]))
+            dirs, filename = os.path.split(path[1])
+            dirs = dirs.split('/') if len(dirs) else []
+            blob = sha[1]
+
+            entry = {'commit': None,
+                     'blob': blob,
+                     'type': 'file',
+                     'path': path,
+                     'tree': {}}
+
+            # Construct a top-level descriptor
+            if not dirs:
+                tree[filename] = entry
+                continue
+
+            # Construct a tree with all the parts
+            rel_tree = tree
+            for part in dirs:
+                if not rel_tree.get(part):
+                    rel_tree[part] = {'commit': None,
+                                      'type': 'folder',
+                                      'tree': {}}
+                rel_tree = rel_tree[part]['tree']
+            rel_tree[filename] = entry
+        return rel_tree
 
     def commit_for_file(self, filename, sha=None):
         r = self.repo
@@ -119,6 +140,11 @@ class Git(object):
             return w.commit
         return None
 
+    def commit_for_files(sha, paths):
+        for path in paths:
+            _, filename = os.path.split(path)
+            yield filename, self.commit_for_file(sha, path)
+
     def revtree(self, sha=None):
         # We need to first traverse the tree and construct a state that
         # we can render to the end-user. This tree will be stored as a
@@ -127,6 +153,7 @@ class Git(object):
         seen = set()
         sha = sha or self.repo.head()
         for walker in self.repo.get_walker(include=[sha]):
+            commit = commit_as_dict(walker.commit)
 
             # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
