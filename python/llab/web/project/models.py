@@ -256,17 +256,24 @@ class Project(models.Model):
         # Dispatch the action
         return self.post_receive_action(klass, action, **context)
 
-    def post_receive_tag(self, action, old_rev, new_rev, refname):
+    def post_receive_tag(self, action, old_rev, tag_rev, refname):
         if action == 'delete':
             self.tag_delete(refname)
             return
+
+        # Fetch the actual revision from the object
+        obj = self.git.repo[tag_rev]
+        if hasattr(obj, 'object'):
+            obj, new_rev = obj.object
+        else:
+            new_rev = obj.id
 
         project = self
         commit = Commit.create_from_sha(project, new_rev)
 
         try:
-            tages = Tag.objects.filter(project=project, name=refname)
-            tag = tages.latest('id')
+            tags = Tag.objects.filter(project=project, name=refname)
+            tag = tags.latest('id')
         except Tag.DoesNotExist:
             tag = Tag(project=project, name=refname, ref=commit)
             tag.save()
@@ -340,8 +347,12 @@ class Commit(models.Model):
             self.save()
         return self._tree
 
+    @tree.setter
+    def tree(self, value):
+        self._tree = value
+
     def refresh_tree(self):
-        self._tree = self.project.git.revtree(sha=self.sha1sum)
+        self._tree = self.project.git.lstree(sha=self.sha1sum)
 
     def refresh_diff(self):
         commit = self.project.git.commit(self.sha1sum)
@@ -377,6 +388,45 @@ class Commit(models.Model):
 
     def short_sha1sum(self):
         return self.sha1sum[:7]
+
+    def revtree(self, folder, as_json=False):
+        """Compute or retrieve the revision tree for a given folder path.
+
+        The revision tree includes the commit details for a given path.
+        This method will attempt to find the path and then compute the
+        revision tree for that level.
+
+        """
+        tree = self.tree
+        tree_is_updated = False
+        for directory in folder.split('/'):
+            if directory not in tree:
+                raise KeyError('{} for {}'.format(directory, folder))
+            tree_is_updated = tree[directory]['commit'] == None
+            tree = tree[directory]['tree']
+
+        if not tree_is_updated:
+            def paths():
+                for entry in tree.itervalues():
+                    if entry['type'] == 'file':
+                        yield entry['path']
+            git = self.project.git
+            sha1sum = self.sha1sum
+            commits = git.commit_for_files(sha=sha1sum, paths=paths())
+            for filename, commit in commits:
+                tree[filename]['commit'] = commit
+            self.tree = tree
+            self.save()
+
+        # We only want to show the top-level of the tree, so
+        # remove any children so we don't confuse
+        for entry in tree.itervalues():
+            del entry['tree']
+
+        if as_json:
+            return json.dumps(tree, indent=4)
+
+        return tree
 
     def fetch_blob(self, path):
         tree = self.tree

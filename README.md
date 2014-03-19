@@ -1,15 +1,11 @@
 llab
 ----
 
-`llab` is a lightweight Github clone. It is currently immature and completly
-in the development process, but you're more than welcome to try it out.
+A lightweight lab for Git Development.
 
-Current development features and topics:
-
-    - Git SSH wrapper for managing users and dispatching commands
-    - SSH Key management with AES cipher and SHA1 verification
-    - Event streams with user and organizations
-    - Repository creation on the server side
+This project is trying to be a low-dependency Github-like clone. It is
+growing out of the efforts that I have seen needed in an industrial company
+where management of tasks and requirements is a bit more involved.
 
 
 Building
@@ -23,3 +19,14 @@ Building
   $ pip install -r requirements
   $ source env.bash
   ```
+
+
+Server Side
+-----------
+
+You can run llab in two authentication modes.
+
+    - Customized OpenSSH Backend
+    - Flat authorized_users
+
+Each backend has their own benefit.

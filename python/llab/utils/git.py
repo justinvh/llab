@@ -7,7 +7,6 @@ import dulwich.repo
 from functools import partial
 from collections import OrderedDict
 
-from dulwich.index import Index
 from dulwich.objects import S_ISGITLINK
 from dulwich.patch import is_binary
 from dulwich.walk import Walker
@@ -98,14 +97,37 @@ class Git(object):
         update_refs_wrap = partial(update_refs, branch=branch)
         return client.send_pack(path, update_refs_wrap, pack_contents)
 
-    def lstree(self, sha=None, path_only=False):
+    def lstree(self, sha=None):
         sha = sha or self.repo.head()
-        t1 = self.repo[sha].tree
+        repo = self.repo
+        t1 = repo[sha].tree
+        tree = {}
         for entry in self.repo.object_store.iter_tree_contents(t1):
-            if path_only:
-                yield entry.path
-            else:
-                yield entry
+            path = entry.path
+            blob = entry.sha
+            dirs, filename = os.path.split(path)
+            dirs = dirs.split('/') if len(dirs) else []
+
+            entry = {'commit': None,
+                     'blob': blob,
+                     'type': 'file',
+                     'path': path}
+
+            # Construct a top-level descriptor
+            if not dirs:
+                tree[filename] = entry
+                continue
+
+            # Construct a tree with all the parts
+            rel_tree = tree
+            for part in dirs:
+                if not rel_tree.get(part):
+                    rel_tree[part] = {'commit': None,
+                                      'type': 'folder',
+                                      'tree': {}}
+                rel_tree = rel_tree[part]['tree']
+            rel_tree[filename] = entry
+        return tree
 
     def commit_for_file(self, filename, sha=None):
         r = self.repo
@@ -115,6 +137,11 @@ class Git(object):
             return w.commit
         return None
 
+    def commit_for_files(self, sha, paths):
+        for path in paths:
+            _, filename = os.path.split(path)
+            yield filename, self.commit_for_file(sha, path)
+
     def revtree(self, sha=None):
         # We need to first traverse the tree and construct a state that
         # we can render to the end-user. This tree will be stored as a
@@ -123,6 +150,7 @@ class Git(object):
         seen = set()
         sha = sha or self.repo.head()
         for walker in self.repo.get_walker(include=[sha]):
+            commit = commit_as_dict(walker.commit)
 
             # Walk the commit and convert it into something usable
             commit = commit_as_dict(walker.commit)
