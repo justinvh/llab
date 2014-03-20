@@ -3,6 +3,7 @@ import datetime
 import socket
 import mimetypes
 import logging
+import copy
 
 import pytz
 
@@ -337,6 +338,7 @@ class Commit(models.Model):
     # The current tree as of this commit
     _tree = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
 
+
     # The related branch and project for this commit
     project = models.ForeignKey(Project, related_name='commits')
 
@@ -398,14 +400,24 @@ class Commit(models.Model):
 
         """
         tree = self.tree
-        tree_is_updated = False
-        for directory in folder.split('/'):
+        parent = tree
+        dirtree = tree
+        tree_needs_update = False
+
+        assert(not folder.endswith('/'))
+
+        folders = folder.split('/')
+        if len(folders) == 1 and folders[0] == "":
+            folders = []
+
+        for directory in folders:
             if directory not in tree:
                 raise KeyError('{} for {}'.format(directory, folder))
-            tree_is_updated = tree[directory]['commit'] == None
+            tree_needs_update = tree[directory]['commit'] == None
+            dirtree = tree[directory]
             tree = tree[directory]['tree']
 
-        if not tree_is_updated:
+        if tree_needs_update:
             def paths():
                 for entry in tree.itervalues():
                     if entry['type'] == 'file':
@@ -413,18 +425,20 @@ class Commit(models.Model):
             git = self.project.git
             sha1sum = self.sha1sum
             commits = git.commit_for_files(sha=sha1sum, paths=paths())
+            dirtree['commit'] = True
             for filename, commit in commits:
                 tree[filename]['commit'] = commit
-            self.tree = tree
+            self.tree = parent
             self.save()
 
-        # We only want to show the top-level of the tree, so
-        # remove any children so we don't confuse
+        tree = copy.deepcopy(tree)
+
         for entry in tree.itervalues():
-            del entry['tree']
+            if entry['type'] == 'folder' and entry.get('tree'):
+                del entry['tree']
 
         if as_json:
-            return json.dumps(tree, indent=4)
+            return json.dumps(tree)
 
         return tree
 

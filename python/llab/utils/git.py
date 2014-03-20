@@ -13,6 +13,37 @@ from dulwich.walk import Walker
 from difflib import SequenceMatcher
 
 
+def sorted_file_folder_tree(tree):
+        ordered_tree = OrderedDict()
+        modified_tree = ordered_tree
+
+        def process_tree(tr, ot):
+            stack, files, folders = [], [], []
+
+            # Iterate through the current tree object
+            for name, obj in tr.iteritems():
+                if obj['type'] == 'folder':
+                    folders.append((name, obj))
+                    stack.append(name)
+                else:
+                    files.append((name, obj))
+
+            # Construct the ordered parameters of the tree
+            for name, obj in sorted(folders):
+                ot[name] = obj
+
+            # Construct the ordered parameters of the tree
+            for name, obj in sorted(files):
+                ot[name] = obj
+
+            # Repeat the process for the new node
+            for item in stack:
+                process_tree(tr[item]['tree'], ot[item]['tree'])
+
+        process_tree(tree, modified_tree)
+        return ordered_tree
+
+
 def commit_as_dict(commit):
     start = commit.author.decode('utf-8').rfind('<')
     author_email = commit.author[start + 1:-1]
@@ -127,20 +158,19 @@ class Git(object):
                                       'tree': {}}
                 rel_tree = rel_tree[part]['tree']
             rel_tree[filename] = entry
-        return tree
+
+        return sorted_file_folder_tree(tree)
 
     def commit_for_file(self, filename, sha=None):
         r = self.repo
         sha = sha or r.head()
         walker = r.get_walker(paths=[filename], include=[sha], max_entries=1)
-        for w in walker:
-            return w.commit
-        return None
+        return commit_as_dict(iter(walker).next().commit)
 
     def commit_for_files(self, sha, paths):
         for path in paths:
             _, filename = os.path.split(path)
-            yield filename, self.commit_for_file(sha, path)
+            yield filename, self.commit_for_file(path, sha)
 
     def revtree(self, sha=None):
         # We need to first traverse the tree and construct a state that
@@ -195,37 +225,7 @@ class Git(object):
                         rel_tree = rel_tree[part]['tree']
                     rel_tree[filename] = entry
 
-        # Now reorganize the tree so when we display it then the tree
-        # will display folder ABC -> files ABC
-        ordered_tree = OrderedDict()
-        modified_tree = ordered_tree
-
-        def process_tree(tr, ot):
-            stack, files, folders = [], [], []
-
-            # Iterate through the current tree object
-            for name, obj in tr.iteritems():
-                if obj['type'] == 'folder':
-                    folders.append((name, obj))
-                    stack.append(name)
-                else:
-                    files.append((name, obj))
-
-            # Construct the ordered parameters of the tree
-            for name, obj in sorted(folders):
-                ot[name] = obj
-
-            # Construct the ordered parameters of the tree
-            for name, obj in sorted(files):
-                ot[name] = obj
-
-            # Repeat the process for the new node
-            for item in stack:
-                process_tree(tr[item]['tree'], ot[item]['tree'])
-
-        process_tree(tree, modified_tree)
-
-        return ordered_tree
+        return sorted_file_folder_tree(tree)
 
     def branches(self):
         refs = self.repo.refs.as_dict()
