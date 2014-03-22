@@ -4,6 +4,7 @@ import socket
 import mimetypes
 import logging
 import copy
+import json
 
 import pytz
 
@@ -404,12 +405,17 @@ class Commit(models.Model):
         dirtree = tree
         tree_needs_update = False
 
+        self.refresh_tree()
+        self.save()
+
         assert(not folder.endswith('/'))
 
         folders = folder.split('/')
         if len(folders) == 1 and folders[0] == "":
+            tree_needs_update = tree['commit'] == None
             folders = []
 
+        tree = tree['tree']
         for directory in folders:
             if directory not in tree:
                 raise KeyError('{} for {}'.format(directory, folder))
@@ -420,27 +426,27 @@ class Commit(models.Model):
         if tree_needs_update:
             def paths():
                 for entry in tree.itervalues():
-                    if entry['type'] == 'file':
-                        yield entry['path']
+                    yield entry['path']
             git = self.project.git
             sha1sum = self.sha1sum
             commits = git.commit_for_files(sha=sha1sum, paths=paths())
             dirtree['commit'] = True
             for filename, commit in commits:
+                print(filename, commit)
                 tree[filename]['commit'] = commit
             self.tree = parent
             self.save()
 
-        tree = copy.deepcopy(tree)
+        dirtree = copy.deepcopy(dirtree)
 
-        for entry in tree.itervalues():
+        for entry in dirtree['tree'].itervalues():
             if entry['type'] == 'folder' and entry.get('tree'):
                 del entry['tree']
 
         if as_json:
-            return json.dumps(tree)
+            return json.dumps(dirtree)
 
-        return tree
+        return dirtree
 
     def fetch_blob(self, path):
         tree = self.tree

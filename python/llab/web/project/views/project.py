@@ -83,7 +83,7 @@ def project_view(request, owner, project, commit=None, path=None):
             else:
                 raise http.Http404('Path not found')
     else:
-        path = project.name
+        path = ''
 
     context.update(project_page_context(request, project, branch))
 

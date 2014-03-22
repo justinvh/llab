@@ -50,16 +50,18 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var $breadcrumb = $('#source-tree-breadcrumb');
     var prev_tree = [];
     var prev_tree_path = ['llab'];
-    var curr_tree = ftree.tree;
+    var curr_tree = ftree;
     var tree_path = 'tree/' + branch + '/';
     var real_path = path;
-    var initial_path = path.split('/');
+    var curr_path = path.split('/');
+    var action_id = 0;
 
     if (window.location.toString().indexOf('tree') !== -1) {
         tree_path = '';
     }
 
-    var build_tree = function (tree) {
+    var build_tree = function (obj, dir) {
+        action_id++;
         $tree.html('');
 
         if (prev_tree.length) {
@@ -72,9 +74,24 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             $tree.append($(record));
         }
 
-        for (var obj in tree) {
-            var item = tree[obj];
-            var item_name = obj;
+        var missing_commits = !obj.commit;
+        if (missing_commits) {
+            (function (prev_action_id) {
+                var url = 'project:commit:revtree';
+                var kwargs = commit;
+                kwargs = {'owner': owner, 'project': project,
+                          'commit': commit, 'directory': dir};
+                llab.getJSON(url, kwargs, function (partial_tree) {
+                    if (action_id != prev_action_id)
+                        return;
+                    build_tree(partial_tree, curr_path.join('/'));
+                });
+            })(action_id);
+        }
+
+        for (var name in obj.tree) {
+            var item = obj.tree[name];
+            var item_name = name;
 
             // Construct the appropriate URL
             var kwargs = {'owner': owner, 'project': project,
@@ -90,6 +107,19 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
                 item_url += item_name + '</span>';
             }
 
+            glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
+
+            if (missing_commits) {
+                var record = '<tr>';
+                record += '<td class="' + item.type + '" data-name="';
+                record += item_name + '">' + glyph + item_url + '</td>';
+                record += '<td></td>';
+                record += '<td></td>';
+                record += '</tr>';
+                $tree.append($(record));
+                continue;
+            }
+
             var email = item.commit.committer_email;
             var gravatar_url = llab.resolve('account:gravatar');
             gravatar_url += '?email=' + email + '&size=16';
@@ -102,8 +132,6 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             commit_url += 'src="' + gravatar_url + '"> ';
             commit_url += '<a href="' + commit_view_url + '">';
             commit_url += item.commit.message + '</a>';
-
-            glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
 
             // Construct the record
             var record = '<tr>';
@@ -121,9 +149,10 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
         $('td.prev-tree > span').click(function () {
             history.back();
             curr_tree = prev_tree.pop()
+            curr_path.pop();
             prev_tree_path.pop();
-            build_tree(curr_tree);
-            llab.readme_if_exists(curr_tree, owner, project, commit);
+            build_tree(curr_tree, curr_path.join('/'));
+            llab.readme_if_exists(curr_tree.tree, owner, project, commit);
             return false;
         });
 
@@ -131,9 +160,10 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             var item_name = $(this).parent().data('name');
             prev_tree.push(curr_tree);
             prev_tree_path.push(item_name);
-            curr_tree = curr_tree[item_name].tree;
-            build_tree(curr_tree);
-            llab.readme_if_exists(curr_tree, owner, project, commit);
+            curr_path.push(item_name);
+            curr_tree = curr_tree.tree[item_name];
+            build_tree(curr_tree, curr_path.join('/'));
+            llab.readme_if_exists(curr_tree.tree, owner, project, commit);
             if (prev_tree.length == 1) {
                 item_name = tree_path + item_name;
             }
@@ -142,17 +172,18 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
         });
     };
 
-    for (var i = 0; i < initial_path.length; i++) {
-        var name = initial_path[i];
-        if (curr_tree[name] && curr_tree[name].type == "folder") {
+    for (var i = 0; i < curr_path.length; i++) {
+        var name = curr_path[i];
+        var ttree = curr_tree.tree;
+        if (ttree[name] && ttree[name].type == "folder") {
             prev_tree.push(curr_tree);
             prev_tree_path.push(name);
-            curr_tree = curr_tree[name].tree;
+            curr_tree = curr_tree[name];
         }
     }
 
     // Construct the file tree and then render out any available README
-    build_tree(curr_tree);
+    build_tree(curr_tree, curr_path.join('/'));
     llab.readme_if_exists(curr_tree, owner, project, commit);
 };
 
@@ -163,7 +194,9 @@ llab.build_tree = function (project, owner, branch, commit, path) {
                   'commit': commit_or_branch, 'path': path};
     var $wait_prompt = $('#wait-prompt');
     llab.getJSON(url, kwargs, function (full_tree) {
-        llab.build_from_tree(full_tree, project, owner, branch, commit, path);
+        path = full_tree.path
+        tree = full_tree.tree
+        llab.build_from_tree(tree, project, owner, branch, commit, path);
         $wait_prompt.hide();
     });
 };

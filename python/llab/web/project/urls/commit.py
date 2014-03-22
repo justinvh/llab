@@ -24,6 +24,11 @@ urlpatterns = patterns('project.views.commit',
          r'(?P<commit>[\w]+)/$'),
          'commit_view', name='view'),
 
+    # Compute the revision tree for a given Commit path
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/commit/'
+         r'(?P<commit>[\w]+)/revtree/(?P<directory>.*)$'),
+         'commit_revtree', name='revtree'),
+
     # View the raw file for a commit
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/raw/'
          r'(?P<commit>[\w]+)/(?P<path>.*)$'),

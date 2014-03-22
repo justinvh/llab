@@ -85,10 +85,10 @@ def commit_raw(request, owner, project, commit, path):
     return http.HttpResponse(content, content_type='text/plain')
 
 
-def commit_revtree(request, owner, project, commit, folder):
+def commit_revtree(request, owner, project, commit, directory):
     """Retrieves and stores a revision tree.
 
     """
-    content = get_commit_or_404(owner, project, commit)
-    content = commit.revtree(folder, as_json=True)
+    commit = get_commit_or_404(owner, project, commit)
+    content = commit.revtree(directory, as_json=True)
     return http.HttpResponse(content, content_type='application/json')

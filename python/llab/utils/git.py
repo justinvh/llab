@@ -14,34 +14,37 @@ from difflib import SequenceMatcher
 
 
 def sorted_file_folder_tree(tree):
-        ordered_tree = OrderedDict()
-        modified_tree = ordered_tree
+    ordered_tree = OrderedDict(tree)
+    modified_tree = ordered_tree
 
-        def process_tree(tr, ot):
-            stack, files, folders = [], [], []
+    def process_tree(tr, ot):
+        stack, files, folders = [], [], []
 
-            # Iterate through the current tree object
-            for name, obj in tr.iteritems():
-                if obj['type'] == 'folder':
-                    folders.append((name, obj))
-                    stack.append(name)
-                else:
-                    files.append((name, obj))
+        if tr.get('tree'):
+            return process_tree(tr['tree'], ot['tree'])
 
-            # Construct the ordered parameters of the tree
-            for name, obj in sorted(folders):
-                ot[name] = obj
+        # Iterate through the current tree object
+        for name, obj in tr.iteritems():
+            if obj['type'] == 'folder':
+                folders.append((name, obj))
+                stack.append(name)
+            else:
+                files.append((name, obj))
 
-            # Construct the ordered parameters of the tree
-            for name, obj in sorted(files):
-                ot[name] = obj
+        # Construct the ordered parameters of the tree
+        for name, obj in sorted(folders):
+            ot[name] = obj
 
-            # Repeat the process for the new node
-            for item in stack:
-                process_tree(tr[item]['tree'], ot[item]['tree'])
+        # Construct the ordered parameters of the tree
+        for name, obj in sorted(files):
+            ot[name] = obj
 
-        process_tree(tree, modified_tree)
-        return ordered_tree
+        # Repeat the process for the new node
+        for item in stack:
+            process_tree(tr[item]['tree'], ot[item]['tree'])
+
+    process_tree(tree, modified_tree)
+    return ordered_tree
 
 
 def commit_as_dict(commit):
@@ -132,12 +135,16 @@ class Git(object):
         sha = sha or self.repo.head()
         repo = self.repo
         t1 = repo[sha].tree
-        tree = {}
+
+        tree = {'commit': None,
+                'type': 'folder',
+                'tree': {}}
+
         for entry in self.repo.object_store.iter_tree_contents(t1):
             path = entry.path
             blob = entry.sha
             dirs, filename = os.path.split(path)
-            dirs = dirs.split('/') if len(dirs) else []
+            dirs_split = dirs.split('/') if len(dirs) else []
 
             entry = {'commit': None,
                      'blob': blob,
@@ -146,15 +153,18 @@ class Git(object):
 
             # Construct a top-level descriptor
             if not dirs:
-                tree[filename] = entry
+                tree['tree'][filename] = entry
                 continue
 
             # Construct a tree with all the parts
-            rel_tree = tree
-            for part in dirs:
+            rel_tree = tree['tree']
+            rel_part = []
+            for part in dirs_split:
+                rel_part.append(part)
                 if not rel_tree.get(part):
                     rel_tree[part] = {'commit': None,
                                       'type': 'folder',
+                                      'path': '/'.join(rel_part),
                                       'tree': {}}
                 rel_tree = rel_tree[part]['tree']
             rel_tree[filename] = entry
