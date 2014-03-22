@@ -112,6 +112,12 @@ class Git(object):
     def commit_changes(self, message):
         return self.repo.commit(message=message)
 
+    def head(self):
+        try:
+            return self.repo.head()
+        except KeyError:
+            return next(self.repo.get_refs().itervalues())
+
     def add(self, file_or_files):
         files = file_or_files
         if not isinstance(file_or_files, (list, tuple)):
@@ -171,71 +177,45 @@ class Git(object):
 
         return sorted_file_folder_tree(tree)
 
-    def commit_for_file(self, filename, sha=None):
+    def commit_for_files(self, paths, sha=None):
         r = self.repo
-        sha = sha or r.head()
-        walker = r.get_walker(paths=[filename], include=[sha], max_entries=1)
-        return commit_as_dict(iter(walker).next().commit)
-
-    def commit_for_files(self, sha, paths):
-        for path in paths:
-            _, filename = os.path.split(path)
-            yield filename, self.commit_for_file(path, sha)
-
-    def revtree(self, sha=None):
-        # We need to first traverse the tree and construct a state that
-        # we can render to the end-user. This tree will be stored as a
-        # JSON object on the commit message
-        tree = {}
+        sha = sha or self.head()
+        paths = list(paths)
         seen = set()
-        sha = sha or self.repo.head()
-        for walker in self.repo.get_walker(include=[sha]):
-            commit = commit_as_dict(walker.commit)
+        files = set(paths)
+        path_stack = len(paths)
 
-            # Walk the commit and convert it into something usable
-            commit = commit_as_dict(walker.commit)
-            for changes in walker.changes():
-                if not isinstance(changes, list):
-                    changes = [changes]
-                for change in changes:
-                    if not change.new:
-                        continue
-
-                    path = change.new.path
-                    if not path:
-                        seen.add(change.old.path)
-                        continue
-
-                    if path in seen:
-                        continue
-
+        for walker in r.get_walker(paths=paths, include=[sha]):
+            for change in walker.changes():
+                path = change.old.path or change.new.path
+                if path not in seen and path in files:
+                    _, filename = os.path.split(path)
                     seen.add(path)
-                    dirs, filename = os.path.split(path)
-                    dirs = dirs.split('/') if len(dirs) else []
-                    blob = change.new.sha
+                    path_stack -= 1
+                    yield commit_as_dict(walker.commit)
+                if not path_stack:
+                    break
+            if not path_stack:
+                break
 
-                    entry = {'commit': commit,
-                             'blob': blob,
-                             'type': 'file',
-                             'path': path,
-                             'tree': {}}
+    def commit_for_file(self, filename, sha=None):
+        return self.commit_for_files([filename], sha)
 
-                    # Construct a top-level descriptor
-                    if not dirs:
-                        tree[filename] = entry
-                        continue
+    def commit_for_directory(self, directory, sha=None):
+        assert(directory.endswith('/'), 'Directories must not end with "/"')
 
-                    # Construct a tree with all the parts
-                    rel_tree = tree
-                    for part in dirs:
-                        if not rel_tree.get(part):
-                            rel_tree[part] = {'commit': commit,
-                                              'type': 'folder',
-                                              'tree': {}}
-                        rel_tree = rel_tree[part]['tree']
-                    rel_tree[filename] = entry
+        r = self.repo
+        sha = sha or self.head()
 
-        return sorted_file_folder_tree(tree)
+        def paths():
+            t1 = r[sha].tree
+            for entry in self.repo.object_store.iter_tree_contents(t1):
+                path = entry.path
+                directory2, filename = os.path.split(path)
+                if directory == directory2:
+                    yield path
+
+        return self.commit_for_files(paths(), sha)
 
     def branches(self):
         refs = self.repo.refs.as_dict()
@@ -267,7 +247,7 @@ class Git(object):
         try:
             old_tree = r[old_rev].tree
         except KeyError:
-            old_tree = r.head()
+            old_tree = self.head()
 
         new_tree = r[new_rev].tree
         changes = store.tree_changes(old_tree, new_tree)
