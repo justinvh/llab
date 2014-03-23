@@ -33,9 +33,9 @@
                 {% gravatar commit.author_email 48 g %}
               </a>
               <div class="btn-group pull-right">
-                <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha1sum %}" class="btn btn-default btn-sm">
+                <a href="{{ commit.get_absolute_url }}" class="btn btn-default btn-sm">
                   View</a>
-                <a href="{% url "project:tree" project=project.name owner=project.owner.username commit=commit.sha1sum path="" %}" class="btn btn-default btn-sm">
+                <a href="{{ commit.get_absolute_tree_url }}" class="btn btn-default btn-sm">
                   Browse</a>
               </div>
               <div class="media-body">
