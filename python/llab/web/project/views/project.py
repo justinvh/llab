@@ -73,8 +73,8 @@ def project_view(request, owner, project, commit=None, path=None):
             commit = branch.ref
 
     if path:
-        tree = commit.tree
-        for item in path.split('/')[:-1]:
+        tree = commit.tree['tree']
+        for item in path.split('/'):
             new_tree = tree.get(item)
             if new_tree and new_tree['type'] == 'folder':
                 tree = new_tree['tree']
@@ -95,7 +95,7 @@ def project_view(request, owner, project, commit=None, path=None):
     return render(request, 'project/view.html', context)
 
 
-def project_tree(request, owner, project, commit, path):
+def project_tree(request, owner, project, commit, path=''):
     commit = get_commit_or_404(owner, project, commit)
     content = json.dumps({'tree': commit.tree, 'path': path})
     return http.HttpResponse(content, content_type='application/json')

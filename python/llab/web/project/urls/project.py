@@ -13,22 +13,37 @@ urlpatterns = patterns('project.views.project',
 
     # View the owner's referenced project
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
-         r'(?P<commit>refs/heads/[\w]+)/(?P<path>.*)$'),
+         r'(?P<commit>refs/heads/[\w]+)/$'),
+        'project_view', name='tree_pathless'),
+
+    # View the owner's referenced project
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
+         r'(?P<commit>refs/heads/[\w]+)/(?P<path>.*)/$'),
         'project_view', name='tree'),
 
     # View the owner's referenced project
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
-         r'(?P<commit>[\w]+)/(?P<path>.*)$'),
-        'project_view', name='tree'),
+         r'(?P<commit>[\w]+)/$'),
+        'project_view', name='tree_commit_pathless'),
+
+    # View the owner's referenced project
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/tree/'
+         r'(?P<commit>[\w]+)/(?P<path>.*)/$'),
+        'project_view', name='tree_commit'),
 
     # View the owner's referenced project's commit tree
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/json/tree/'
-         r'(?P<commit>refs/heads/[\w]+)/?(?P<path>[\w\/-]+)$'),
+         r'(?P<commit>refs/heads/[\w]+)/?(?P<path>[\w\/-]+)/$'),
         'project_tree', name='json_tree_branch'),
 
     # View the owner's referenced project's commit tree
     url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/json/tree/'
-         r'(?P<commit>[\w]+)/?(?P<path>[\w\/-]+)$'),
+         r'(?P<commit>[\w]+)/$'),
+        'project_tree', name='json_tree_pathless'),
+
+    # View the owner's referenced project's commit tree
+    url((r'^(?P<owner>[\w-]+)/(?P<project>[\w-]+)/json/tree/'
+         r'(?P<commit>[\w]+)/(?P<path>[\w\/-]+)/$'),
         'project_tree', name='json_tree'),
 
     # Fork an existing project

@@ -2,6 +2,20 @@
  * requires: 3rd-party/humanize.js
  */
 
+jQuery.fn.extend({
+    disableSelection : function() {
+        return this.each(function() {
+            this.onselectstart = function() { return false; };
+            this.unselectable = "on";
+            jQuery(this).css('user-select', 'none');
+            jQuery(this).css('-o-user-select', 'none');
+            jQuery(this).css('-moz-user-select', 'none');
+            jQuery(this).css('-khtml-user-select', 'none');
+            jQuery(this).css('-webkit-user-select', 'none');
+        });
+    }
+});
+
 llab.readme_cache = {};
 llab.render_readme = function (owner, project, commit, directory) {
     var kwargs = {'owner': owner, 'project': project,
@@ -52,27 +66,51 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     var prev_tree_path = ['llab'];
     var curr_tree = ftree;
     var tree_path = 'tree/' + branch + '/';
+
+    if (path[0] === '/') {
+        path = path.substr(1);
+    }
+
     var real_path = path;
     var curr_path = path.split('/');
+    var pseudo_history = [];
     var action_id = 0;
 
-    if (window.location.toString().indexOf('tree') !== -1) {
-        tree_path = '';
-    }
+    window.onpopstate = function (event) {
+        if (!event.state) {
+            return;
+        }
+        var new_path = event.state.path;
+        return llab.build_from_tree(
+            ftree, project, owner, branch, commit, new_path);
+    };
 
     var build_tree = function (obj, dir) {
         action_id++;
         $tree.html('');
 
+        if (dir[0] === '/') {
+            dir = dir.substr(1);
+        }
+
+        var record = '';
         if (prev_tree.length) {
-            var record = '<tr>';
+            record = '<tr>';
             record += '<td class="prev-tree">';
             record += '<span class="text-primary link">../</span>' +'</td>';
             record += '<td></td>';
             record += '<td></td>';
             record += '</tr>';
-            $tree.append($(record));
+        } else {
+            record = '<tr>';
+            record += '<td>&nbsp;</td>';
+            record += '<td></td>';
+            record += '<td></td>';
+            record += '</tr>';
         }
+
+        var $record = $(record).disableSelection();
+        $tree.append($record);
 
         var missing_commits = !obj.commit;
         if (missing_commits) {
@@ -146,13 +184,18 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             $tree.append($(record));
         }
 
-        $('td.prev-tree > span').click(function () {
-            history.back();
+        $('td.prev-tree').click(function () {
             curr_tree = prev_tree.pop()
             curr_path.pop();
             prev_tree_path.pop();
             build_tree(curr_tree, curr_path.join('/'));
             llab.readme_if_exists(curr_tree.tree, owner, project, commit);
+
+            var item_name = window.location.pathname.split('/');
+            item_name = item_name.slice(0, -2);
+            item_name = item_name.join('/');
+            var path_name = curr_path.join('/')
+            history.pushState({'path': path_name}, '', item_name + '/');
             return false;
         });
 
@@ -162,12 +205,19 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             prev_tree_path.push(item_name);
             curr_path.push(item_name);
             curr_tree = curr_tree.tree[item_name];
-            build_tree(curr_tree, curr_path.join('/').slice(2));
+
+            var new_path = curr_path.join('/');
+            build_tree(curr_tree, new_path);
             llab.readme_if_exists(curr_tree.tree, owner, project, commit);
+
             if (prev_tree.length === 1) {
-                item_name = tree_path + item_name;
+                if (window.location.toString().indexOf('tree') === -1) {
+                    item_name = tree_path + item_name;
+                }
             }
-            history.pushState({}, '', item_name + '/');
+
+            history.pushState({'path': new_path}, '', item_name + '/');
+            pseudo_history.push(item_name);
             return false;
         });
     };
@@ -178,13 +228,13 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
         if (ttree[name] && ttree[name].type === "folder") {
             prev_tree.push(curr_tree);
             prev_tree_path.push(name);
-            curr_tree = curr_tree[name];
+            curr_tree = curr_tree.tree[name];
         }
     }
 
     // Construct the file tree and then render out any available README
-    build_tree(curr_tree, curr_path.join('/'));
-    llab.readme_if_exists(curr_tree, owner, project, commit);
+    build_tree(curr_tree.tree, curr_path.join('/'));
+    llab.readme_if_exists(curr_tree.tree, owner, project, commit);
 };
 
 llab.build_tree = function (project, owner, branch, commit, path) {
@@ -194,9 +244,8 @@ llab.build_tree = function (project, owner, branch, commit, path) {
                   'commit': commit_or_branch, 'path': path};
     var $wait_prompt = $('#wait-prompt');
     llab.getJSON(url, kwargs, function (full_tree) {
-        path = full_tree.path
         tree = full_tree.tree
         llab.build_from_tree(tree, project, owner, branch, commit, path);
         $wait_prompt.hide();
-    });
+    }, false);
 };

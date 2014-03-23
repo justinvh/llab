@@ -35,7 +35,7 @@
               <div class="btn-group pull-right">
                 <a href="{% url "project:commit:view" project=project.name owner=project.owner.username commit=commit.sha %}" class="btn btn-default btn-sm">
                   View</a>
-                <a href="{% url "project:tree" project=project.name owner=project.owner.username commit=commit.sha path="" %}" class="btn btn-default btn-sm">
+                <a href="{% url "project:tree_commit_pathless" project=project.name owner=project.owner.username commit=commit.sha %}" class="btn btn-default btn-sm">
                   Browse</a>
               </div>
               <div class="media-body">

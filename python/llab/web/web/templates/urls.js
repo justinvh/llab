@@ -31,10 +31,15 @@ var {{ namespace }} = {};
     return path;
 };
 
-{{ namespace }}.getJSON = function (name, kwargs, params, callback) {
+{{ namespace }}.getJSON = function (name, kwargs, params, callback, slash) {
     if (typeof(params) === "function") {
+        slash = callback;
         callback = params;
         params = {};
     }
-    return $.getJSON({{ namespace }}.resolve(name, kwargs), params, callback);
+    var resolve = {{ namespace }}.resolve(name, kwargs);
+    if (slash === false) {
+        resolve = resolve.slice(0, -1);
+    }
+    return $.getJSON(resolve, params, callback);
 };

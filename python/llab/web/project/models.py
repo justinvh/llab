@@ -500,7 +500,7 @@ class Commit(models.Model):
         return dirtree
 
     def fetch_blob(self, path):
-        tree = self.tree
+        tree = self.tree['tree']
         directories, filename = os.path.split(path)
         directories = directories.split('/') if len(directories) else []
         for item in directories:
@@ -586,8 +586,8 @@ class Commit(models.Model):
         if project.organization:
             owner = project.organization.name
         kwds = {'owner': owner, 'project': project.name,
-                'commit': self.sha1sum, 'path': ''}
-        return reverse('project:tree', kwargs=kwds)
+                'commit': self.sha1sum}
+        return reverse('project:tree_commit_pathless', kwargs=kwds)
 
     def __unicode__(self):
         return u'{} @ {}'.format(self.short_sha1sum(), self.project)
@@ -624,8 +624,8 @@ class Branch(models.Model):
         if project.organization:
             owner = project.organization.name
         kwds = {'owner': owner, 'project': project.name,
-                'commit': self.name, 'path': ''}
-        return reverse('project:tree', kwargs=kwds)
+                'commit': self.name}
+        return reverse('project:tree_pathless', kwargs=kwds)
 
     def short_name(self):
         return self.name.split('/')[-1]
