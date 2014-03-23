@@ -101,7 +101,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
 
             // Construct the appropriate glyph
             var glyph = 'glyphicon-file';
-            if (item.type == 'folder') {
+            if (item.type === 'folder') {
                 glyph = 'glyphicon-folder-close';
                 item_url = '<span class="text-primary link">';
                 item_url += item_name + '</span>';
@@ -109,7 +109,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
 
             glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
 
-            if (missing_commits) {
+            if (missing_commits || item.type === 'folder') {
                 var record = '<tr>';
                 record += '<td class="' + item.type + '" data-name="';
                 record += item_name + '">' + glyph + item_url + '</td>';
@@ -162,9 +162,9 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             prev_tree_path.push(item_name);
             curr_path.push(item_name);
             curr_tree = curr_tree.tree[item_name];
-            build_tree(curr_tree, curr_path.join('/'));
+            build_tree(curr_tree, curr_path.join('/').slice(2));
             llab.readme_if_exists(curr_tree.tree, owner, project, commit);
-            if (prev_tree.length == 1) {
+            if (prev_tree.length === 1) {
                 item_name = tree_path + item_name;
             }
             history.pushState({}, '', item_name + '/');
@@ -175,7 +175,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
     for (var i = 0; i < curr_path.length; i++) {
         var name = curr_path[i];
         var ttree = curr_tree.tree;
-        if (ttree[name] && ttree[name].type == "folder") {
+        if (ttree[name] && ttree[name].type === "folder") {
             prev_tree.push(curr_tree);
             prev_tree_path.push(name);
             curr_tree = curr_tree[name];

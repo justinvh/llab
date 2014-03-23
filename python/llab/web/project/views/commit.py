@@ -89,6 +89,8 @@ def commit_revtree(request, owner, project, commit, directory):
     """Retrieves and stores a revision tree.
 
     """
+    if directory == '/':
+        directory = ''
     commit = get_commit_or_404(owner, project, commit)
     content = commit.revtree(directory, as_json=True)
     return http.HttpResponse(content, content_type='application/json')

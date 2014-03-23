@@ -18,7 +18,7 @@ from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext as _
 
 from django.conf import settings
-from llab.utils.git import Git
+from llab.utils.git import Git, sorted_file_folder_tree
 from llab.utils.request import notify_users
 
 from organization.models import Organization
@@ -339,7 +339,6 @@ class Commit(models.Model):
     # The current tree as of this commit
     _tree = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
 
-
     # The related branch and project for this commit
     project = models.ForeignKey(Project, related_name='commits')
 
@@ -400,52 +399,104 @@ class Commit(models.Model):
         revision tree for that level.
 
         """
-        tree = self.tree
-        parent = tree
-        dirtree = tree
-        tree_needs_update = False
+        original_tree = self.tree
+        original_dirtree = original_tree
+        parent_tree = original_tree
 
-        self.refresh_tree()
-        self.save()
+        original_tree = original_tree['tree']
 
+        # There is a special case where you are looking at the top-level
         assert(not folder.endswith('/'))
-
         folders = folder.split('/')
         if len(folders) == 1 and folders[0] == "":
-            tree_needs_update = tree['commit'] == None
             folders = []
 
-        tree = tree['tree']
+        # We can try "repairing" the tree early on so we do less work
+        try:
+            rhs = Commit.objects.filter(commit_time__gt=self.commit_time)
+            rhs = rhs.earliest('commit_time')
+            rhs = rhs.tree
+        except Commit.DoesNotExist:
+            rhs = [None]
+
+        try:
+            lhs = Commit.objects.filter(commit_time__lt=self.commit_time)
+            lhs = lhs.latest('commit_time')
+            lhs = lhs.tree
+        except Commit.DoesNotExist:
+            lhs = [None]
+
+        # Iterate through the trees and try to determine good data
         for directory in folders:
-            if directory not in tree:
+            if directory not in original_tree:
                 raise KeyError('{} for {}'.format(directory, folder))
-            tree_needs_update = tree[directory]['commit'] == None
-            dirtree = tree[directory]
-            tree = tree[directory]['tree']
+            original_dirtree = original_tree[directory]
+            original_tree = original_tree[directory]['tree']
+            rhs = rhs[directory]['tree'] if directory in rhs else [None]
+            lhs = lhs[directory]['tree'] if directory in lhs else [None]
 
-        if tree_needs_update:
-            def paths():
-                for entry in tree.itervalues():
+        # If we have the original tree and the commit, then no work needed
+        if original_dirtree['commit']:
+            dirtree = copy.deepcopy(original_dirtree)
+            if as_json:
+                return json.dumps(dirtree)
+            return sorted_file_folder_tree(dirtree)
+
+        # We need nodes on both sides of the tree to determine if we can
+        # skip the current filepath. This ensures that the current tree
+        # did not have tree modifications
+        def paths():
+            for path, entry in original_tree.iteritems():
+                if entry['type'] == 'file':
+                    if rhs and lhs and path in rhs and path in lhs:
+                        if lhs[path]['blob'] == rhs[path]['blob']:
+                            continue
                     yield entry['path']
-            git = self.project.git
-            sha1sum = self.sha1sum
-            commits = git.commit_for_files(sha=sha1sum, paths=paths())
-            dirtree['commit'] = True
-            for filename, commit in commits:
-                print(filename, commit)
-                tree[filename]['commit'] = commit
-            self.tree = parent
-            self.save()
+                """
+                elif entry['type'] == 'folder':
+                    slhs = lhs[path]['tree'] if path in lhs else None
+                    srhs = rhs[path]['tree'] if path in rhs else None
+                    subtrees = [entry['tree']]
+                    break_subtrees = False
+                    while subtrees:
+                        subtree = subtrees.pop()
+                        for subpath, subentry in subtree.iteritems():
+                            if slhs and srhs and path in slhs and path in srhs:
+                                if slhs[path]['blob'] == srhs[path]['blob']:
+                                    continue
+                            if entry['type'] == 'folder':
+                                subtrees.append(entry['tree'])
+                            else:
+                                break_subtrees = True
+                                yield entry['path']
+                        if break_subtrees:
+                            break
+                """
 
-        dirtree = copy.deepcopy(dirtree)
+        # Repair the nodes that we don't have
+        git = self.project.git
+        sha1sum = self.sha1sum
+        commits = git.commit_for_files(sha=sha1sum, paths=paths())
+        original_dirtree['commit'] = True
+        for path, commit in commits:
+            directory, filename = os.path.split(path)
+            directory = directory[len(folder):]
+            if filename in original_tree:
+                original_tree[filename]['commit'] = commit
+                continue
+            subtree = original_tree
+            for subdir in directory.split(os.sep):
+                subtree = subtree[subdir]
+                subtree['commit'] = commit
+                subtree = subtree['tree']
+            subtree[filename]['commit'] = commit
+        self.tree = parent_tree
+        self.save()
 
-        for entry in dirtree['tree'].itervalues():
-            if entry['type'] == 'folder' and entry.get('tree'):
-                del entry['tree']
-
+        # Copy the tree and return the sorted variant
+        dirtree = copy.deepcopy(original_dirtree)
         if as_json:
             return json.dumps(dirtree)
-
         return dirtree
 
     def fetch_blob(self, path):

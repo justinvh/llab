@@ -14,14 +14,16 @@ from difflib import SequenceMatcher
 
 
 def sorted_file_folder_tree(tree):
-    ordered_tree = OrderedDict(tree)
+    ordered_tree = OrderedDict()
     modified_tree = ordered_tree
+
+    # Process the intiial node
+    for key, value in tree.iteritems():
+        modified_tree[key] = value
+    modified_tree['tree'] = OrderedDict()
 
     def process_tree(tr, ot):
         stack, files, folders = [], [], []
-
-        if tr.get('tree'):
-            return process_tree(tr['tree'], ot['tree'])
 
         # Iterate through the current tree object
         for name, obj in tr.iteritems():
@@ -33,7 +35,8 @@ def sorted_file_folder_tree(tree):
 
         # Construct the ordered parameters of the tree
         for name, obj in sorted(folders):
-            ot[name] = obj
+            ot[name] = OrderedDict(obj)
+            ot[name]['tree'] = OrderedDict()
 
         # Construct the ordered parameters of the tree
         for name, obj in sorted(files):
@@ -41,9 +44,13 @@ def sorted_file_folder_tree(tree):
 
         # Repeat the process for the new node
         for item in stack:
+            ot[item]['type'] = tr[item]['type']
+            ot[item]['commit'] = tr[item]['commit']
+
+        for item in stack:
             process_tree(tr[item]['tree'], ot[item]['tree'])
 
-    process_tree(tree, modified_tree)
+    process_tree(tree['tree'], modified_tree['tree'])
     return ordered_tree
 
 
@@ -138,7 +145,7 @@ class Git(object):
         return client.send_pack(path, update_refs_wrap, pack_contents)
 
     def lstree(self, sha=None):
-        sha = sha or self.repo.head()
+        sha = sha or self.head()
         repo = self.repo
         t1 = repo[sha].tree
 
@@ -186,13 +193,17 @@ class Git(object):
         path_stack = len(paths)
 
         for walker in r.get_walker(paths=paths, include=[sha]):
-            for change in walker.changes():
-                path = change.old.path or change.new.path
-                if path not in seen and path in files:
-                    _, filename = os.path.split(path)
-                    seen.add(path)
-                    path_stack -= 1
-                    yield commit_as_dict(walker.commit)
+            for changes in walker.changes():
+                if not isinstance(changes, list):
+                    changes = [changes]
+                for change in changes:
+                    path = change.old.path or change.new.path
+                    if path not in seen and path in files:
+                        seen.add(path)
+                        path_stack -= 1
+                        yield path, commit_as_dict(walker.commit)
+                    if not path_stack:
+                        break
                 if not path_stack:
                     break
             if not path_stack:
@@ -202,7 +213,7 @@ class Git(object):
         return self.commit_for_files([filename], sha)
 
     def commit_for_directory(self, directory, sha=None):
-        assert(directory.endswith('/'), 'Directories must not end with "/"')
+        assert(directory.endswith('/'))
 
         r = self.repo
         sha = sha or self.head()
