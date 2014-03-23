@@ -151,7 +151,15 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
                 var record = '<tr>';
                 record += '<td class="' + item.type + '" data-name="';
                 record += item_name + '">' + glyph + item_url + '</td>';
-                record += '<td></td>';
+
+                if (missing_commits && item.type !== 'folder') {
+                    record += '<td>';
+                    record += '<a href="#">Retrieving latest commit...</a>';
+                    record += '</td>';
+                } else {
+                    record += '<td></td>';
+                }
+
                 record += '<td></td>';
                 record += '</tr>';
                 $tree.append($(record));
