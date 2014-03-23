@@ -58,5 +58,6 @@ def project_page_context(request, project, branch=None):
     return {'branch_count': project.branches.count(),
             'commit_count': branch.commit_count,
             'contributor_count': project.contributors.count(),
+            'requirement_count': project.requirements.count(),
             'tag_count': project.tags.count(),
             'user_is_admin': project.is_admin(request.user)}
