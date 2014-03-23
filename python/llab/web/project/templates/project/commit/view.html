@@ -45,14 +45,21 @@
                 <a href='#{{ change.new_path|slugify }}'>{{ change.new_path }}</a>
                 <span class="gray-light">
                   {% if change.file_deleted %}
-                  was deleted.
+                    was deleted.
                   {% elif change.file_added %}
-                  was added
+                    was added.
                   {% else %}
-                  with
-                  {% if change.lines_added %}{{ change.lines_added }} line{{ change.lines_added|pluralize }} added.{% endif %}
-                  {% if change.lines_added and change.lines_deleted %}and{% endif %}
-                  {% if change.lines_deleted %}{{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.{% endif %}
+                    modified with
+                    {% if change.lines_added %}
+                      {{ change.lines_added }} line{{ change.lines_added|pluralize }}
+                      added{% if not change.lines_deleted %}.{% endif %}
+                    {% endif %}
+
+                    {% if change.lines_added and change.lines_deleted %} and {% endif %}
+
+                    {% if change.lines_deleted %}
+                    {{ change.lines_deleted }} line{{ change.lines_deleted|pluralize }} deleted.
+                    {% endif %}
                   {% endif %}
                 </span>
               </li>
@@ -78,10 +85,18 @@
           </div>
           <div class="panel-body">
             <div class="progress">
+              {% if change.lines_added_ratio or change.lines_deleted_ratio %}
               <div class="progress-bar progress-bar-success"
                 style="width: {{ change.lines_added_ratio }}%"></div>
               <div class="progress-bar progress-bar-danger"
                 style="width: {{ change.lines_deleted_ratio }}%"></div>
+              {% elif change.file_deleted %}
+              <div class="progress-bar progress-bar-danger"
+                style="width: 100%"></div>
+              {% else %}
+              <div class="progress-bar progress-bar-success"
+                style="width: 100%"></div>
+              {% endif %}
             </div>
             {% if change.file_deleted %}
             <small class="gray-light">File was deleted.</small>
