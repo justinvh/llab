@@ -148,7 +148,7 @@ llab.build_from_tree = function (ftree, project, owner, branch, commit, path) {
             glyph = '<span class="glyphicon ' + glyph + '"></span>&nbsp;';
 
             if (missing_commits || item.type === 'folder') {
-                var record = '<tr>';
+                var record = '<tr class="text-info">';
                 record += '<td class="' + item.type + '" data-name="';
                 record += item_name + '">' + glyph + item_url + '</td>';
 
