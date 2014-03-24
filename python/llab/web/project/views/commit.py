@@ -5,7 +5,8 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 
 from .helpers import get_commit_or_404, project_page_context
-from llab.web.project.models import Project, Branch
+from ..models import Project, Branch
+
 from llab.utils.collectiontools import DefaultOrderedDict
 from llab.utils.git import commit_as_dict
 

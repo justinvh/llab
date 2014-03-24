@@ -3,6 +3,11 @@ import argparse
 import sys
 import os
 import subprocess
+import django
+
+
+django.setup()
+
 
 from llab.auth import ssh_user
 

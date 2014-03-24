@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 import sys
 import os
+import django
 
-from llab.web.project.models import Project
-from llab.web.account.models import User
+django.setup()
+
+
+from project.models import Project
+from account.models import User
 
 
 # Determine the project being executed

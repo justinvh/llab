@@ -1,7 +1,7 @@
 import os
 
-from llab.web.project.models import Project
-from llab.web.account.models import User
+from project.models import Project
+from account.models import User
 
 
 class AuthenticationError(Exception):
@@ -39,9 +39,8 @@ def authenticate(user_id, project_path):
         m = '[DENIED] {} does not have permissions to commit to "{}".'
         raise AuthenticationError(m.format(user.username, project.full_name()))
 
-    except Project.DoesNotExist as e:
+    except Project.DoesNotExist:
         raise BadProjectError('[DENIED] An invalid project was specified.')
 
-    except User.DoesNotExist as e:
+    except User.DoesNotExist:
         raise BadUserError('[DENIED] You are not registered.')
-
