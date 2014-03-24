@@ -667,13 +667,9 @@ class Tag(models.Model):
 
 
 class Requirement(models.Model):
-    project = models.ForeignKey(Project, related_name='requirements')
-
-    parents = models.ManyToManyField(
-        'Requirement', related_name='+', null=True, blank=True)
-    children = models.ManyToManyField(
-        'Requirement', related_name='+', null=True, blank=True)
-
+    project = models.ManyToManyField(Project, related_name='requirements')
+    belongs_to = models.ManyToManyField(
+        'self', related_name='contains', null=True, blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               related_name='requirements')
     organization = models.ForeignKey(Organization, null=True)
@@ -683,7 +679,7 @@ class Requirement(models.Model):
                     'numbers, underscores or hyphens.'))
     description = models.TextField(
         verbose_name='Requirement Description',
-        max_length=255, help_text=_('Describe this requirement.'))
+        help_text=_('Describe this requirement.'))
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL)
