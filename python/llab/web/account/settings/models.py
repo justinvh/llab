@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from account.models import User
 from .fields import PublicKeyField
@@ -14,7 +14,7 @@ Notification = make_bitwise_enumeration('Notification', ('email', 'web'))
 
 # This is the key manager--or the gate-keeper
 module = settings.SSH_KEY_MANAGEMENT_BACKEND
-ssh_manager =  __import__(module, globals(), locals(), ['run', 'delete'], -1)
+ssh_manager = __import__(module, globals(), locals(), ['run', 'delete'], -1)
 
 
 class Profile(models.Model):
@@ -66,7 +66,7 @@ class EmailAccount(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, related_name='email_accounts')
     email = models.EmailField()
-    primary = models.BooleanField()
+    primary = models.BooleanField(default=False)
 
 
 class PublicKey(models.Model):

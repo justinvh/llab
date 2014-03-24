@@ -15,7 +15,7 @@ from collections import OrderedDict
 from django.db import models, transaction
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from django.conf import settings
 from llab.utils.git import Git, sorted_file_folder_tree
@@ -685,4 +685,4 @@ class Requirement(models.Model):
     starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL)
     fulfilled_by = models.ManyToManyField(
         Commit, related_name='requirements', blank=True)
-    fulfilled = models.BooleanField()
+    fulfilled = models.BooleanField(default=False)

@@ -9,8 +9,8 @@ from django.conf import settings
 from django import http
 from llab.utils.request import post_or_none
 
-from llab.web.project.forms import ProjectForm
-from llab.web.project.models import Project, Branch, Tag
+from ..forms import ProjectForm
+from ..models import Project, Branch, Tag
 
 from .helpers import get_commit_or_404, safe_markdown, project_page_context
 from .helpers import lookup_and_guess_commit

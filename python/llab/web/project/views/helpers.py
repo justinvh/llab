@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
-from llab.web.project.models import Project, Commit, Branch
+from ..models import Project, Commit, Branch
 
 misaka_extensions = m.EXT_FENCED_CODE
 
