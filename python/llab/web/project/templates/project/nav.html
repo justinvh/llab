@@ -48,14 +48,5 @@
       Requirement{{ requirement_count|pluralize }}
     </a>
   </li>
-
-  {% if user_is_admin %}
-  <li{% if admin_active %} class="active"{% endif %}>
-    <a data-toggle="admin" href="#tab-issues">
-      <span class="glyphicon glyphicon-cog"></span>
-      Settings
-    </a>
-  </li>
-  {% endif %}
 </ul>
 

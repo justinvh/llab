@@ -25,13 +25,13 @@ llab.render_readme = function (owner, project, commit, directory) {
     var $body = $('#readme-body');
 
     if (url in llab.readme_cache) {
-        $readme.show();
-        $body.html(llab.readme_cache[url]).show();
+        $readme.fadeIn();
+        $body.html(llab.readme_cache[url]).fadeIn();
         return true;
     }
 
     $.get(url, function (content) {
-        $readme.show();
+        $readme.fadeIn();
         $body.hide().html(content).fadeIn()
         llab.readme_cache[url] = content;
     }).fail(function () {
