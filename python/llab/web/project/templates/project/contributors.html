@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+{% load gravatar %}
+{% load staticfiles %}
+{% load project_extras %}
+
+{% block javascript %}
+<script src="{% static "project/js/3rd-party/humanize.js" %}"></script>
+<script src="{% static "project/js/view.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 center-block no-float">
+
+    {% include "project/header.html" %}
+    {% include "project/nav.html" with contributors_active=True %}
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab-source">
+        <br>
+        <div class="panel panel-primary">
+          <div class='panel-heading clearfix'>
+            <div class='panel-title'>Contributors</div>
+          </div>
+          <div class="panel-body">
+            {% for email, stat in project.contributors.iteritems %}
+            <h3>#{{ forloop.counter }} {{ stat.primary_name }} - {{ stat.primary_email }}</h3>
+
+            {% if stat.has_multiple_names %}
+            <p>{{ email }} is seen as multiple people in {{ project.name }}.</p>
+            <ul>
+                {% for name in stat.names %}
+                <li>{{ name }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if stat.has_multiple_emails %}
+            <p>{{ email }} is seen with multiple email aliases in {{ project.name }}.</p>
+            <ul>
+                {% for email in stat.emails %}
+                <li>{{ email }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <span>Averages {{ stat.per_day }} commits per day and is responsible for {{ stat.ratio }}% ({{ stat.count }} commits) of the commits.</span>
+            <div class="progress">
+              <div class="progress-bar progress-bar-success"
+                   style="width: {{ stat.ratio }}%"></div>
+            </div>
+            <hr>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

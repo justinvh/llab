@@ -28,7 +28,7 @@
   </li>
 
   <li{% if contributors_active %} class="active"{% endif %}>
-    <a data-toggle="tab" href="#tab-contributors">
+    <a href="{{ project.get_contributors_url }}">
       <span class="glyphicon glyphicon-globe"></span>
       <strong>{{ contributor_count }}</strong> Contributor{{ contributor_count|pluralize }}
     </a>

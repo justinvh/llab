@@ -1,4 +1,5 @@
 import os
+import sys
 import datetime
 import socket
 import mimetypes
@@ -10,7 +11,7 @@ import pytz
 
 import django.dispatch
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from django.db import models, transaction
 from django.core.urlresolvers import reverse
@@ -68,6 +69,9 @@ class Project(models.Model):
     modified = models.DateTimeField(auto_now=True)
     starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
+    # Some dynamic stats
+    contributors = JSONField(decoder_kwargs={'object_pairs_hook': OrderedDict})
+
     @property
     def git(self):
         if hasattr(self, '_git'):
@@ -79,10 +83,82 @@ class Project(models.Model):
     def git(self, value):
         self._git = value
 
-    @property
-    def contributors(self):
-        from account.models import User
-        return User.objects.filter(author_for_commits__project=self).distinct()
+    def refresh_contributors(self):
+        stats = defaultdict(int)
+        email_names = defaultdict(set)
+        name_emails = defaultdict(set)
+        seen_names = set()
+        total_commits = 0
+        min_commit_time, max_commit_time = (sys.maxint, 0)
+
+        # Populate the commit table
+        commits = {}
+        for branch in self.branches.all():
+            for commit in self.git.commits(branch=branch.name):
+                commits[commit.sha().hexdigest()] = commit
+
+        for commit in commits.itervalues():
+            start = commit.author.decode('utf-8').rfind('<')
+            email = commit.author[start + 1:-1]
+            name = commit.author[:start]
+            if name in seen_names:
+                email = iter(name_emails[name]).next()
+            stats[email] += 1
+            email_names[email].add(name)
+            name_emails[name].add(email)
+            seen_names.add(name)
+            total_commits += 1
+            if commit.author_time > max_commit_time:
+                max_commit_time = commit.author_time
+            elif commit.author_time < min_commit_time:
+                min_commit_time = commit.author_time
+
+        # Try to normalize the data
+        normalized = defaultdict(int)
+        normalized_aliases_email = defaultdict(set)
+        normalized_aliases_name = defaultdict(set)
+        for email, value in stats.iteritems():
+            normalized_aliases_name[email] = email_names[email]
+            normalized[email] += value
+            if len(email_names[email]) == 1:
+                continue
+            for name in email_names[email]:
+                normalized_aliases_name[email].add(name)
+                for sec_email in name_emails[email]:
+                    normalized[email] += stats[sec_email]
+                    normalized_aliases_email[email].add(sec_email)
+                    normalized[email] += stats[sec_email]
+
+        # Figure out the ratios
+        SECONDS_PER_DAY = 86400.0
+        days = (max_commit_time - min_commit_time) / SECONDS_PER_DAY
+        for key, value in normalized.iteritems():
+            ratio = (value / float(total_commits)) * 100.0
+            per_day = round(value / days, 2)
+
+            names = normalized_aliases_name[key]
+            emails = normalized_aliases_email[key]
+
+            has_multiple_emails = len(emails) > 1
+            has_multiple_names = len(names) > 1
+
+            primary_email = key
+            primary_name = iter(names).next()
+
+            stats[key] = {'ratio': round(ratio, 3),
+                          'count': value,
+                          'per_day': per_day,
+                          'has_multiple_emails': has_multiple_emails,
+                          'has_multiple_names': has_multiple_names,
+                          'primary_name': primary_name,
+                          'primary_email': primary_email,
+                          'emails': list(emails),
+                          'names': list(names)}
+
+        sort = sorted(stats.items(), key=lambda i: -i[1]['ratio'])
+        self.contributors = OrderedDict(sort)
+        self.save()
+        return self.contributors
 
     def is_admin(self, user):
         if user == self.owner:
@@ -174,6 +250,13 @@ class Project(models.Model):
         kwds = {'owner': owner, 'project': self.name}
         return reverse('project:tags', kwargs=kwds)
 
+    def get_contributors_url(self):
+        owner = self.owner.username
+        if self.organization:
+            owner = self.organization.name
+        kwds = {'owner': owner, 'project': self.name}
+        return reverse('project:contributors', kwargs=kwds)
+
     def get_absolute_path(self):
         repo = settings.GIT_REPOSITORY_PATH
         return os.path.join(repo, self.full_name())
@@ -256,7 +339,12 @@ class Project(models.Model):
                    klass: name}
 
         # Dispatch the action
-        return self.post_receive_action(klass, action, **context)
+        dispatch = self.post_receive_action(klass, action, **context)
+
+        # Refresh dynamic attributes
+        self.refresh_contributors()
+
+        return dispatch
 
     def post_receive_tag(self, action, old_rev, tag_rev, refname):
         if action == 'delete':

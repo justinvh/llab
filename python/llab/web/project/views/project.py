@@ -1,6 +1,9 @@
 import user_streams
 import json
 import os
+import sys
+
+from collections import defaultdict, OrderedDict
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,6 +12,7 @@ from django.conf import settings
 from django import http
 from llab.utils.request import post_or_none
 
+from account.models import User
 from ..forms import ProjectForm
 from ..models import Project, Branch, Tag
 
@@ -125,6 +129,18 @@ def project_tags(request, owner, project):
     context = {'project': project, 'owner': owner}
     context.update(project_page_context(request, project))
     return render(request, 'project/tags.html', context)
+
+
+def project_contributors(request, owner, project):
+    project = get_object_or_404(Project, name=project, owner__username=owner)
+
+    if not project.commits.count():
+        raise NotImplementedError
+
+    # Now finalize the context
+    context = {'project': project, 'owner': owner}
+    context.update(project_page_context(request, project))
+    return render(request, 'project/contributors.html', context)
 
 
 def project_download(request, owner, project, tag):

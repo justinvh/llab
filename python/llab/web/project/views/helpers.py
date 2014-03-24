@@ -57,7 +57,7 @@ def project_page_context(request, project, branch=None):
         branch = Branch.objects.filter(project=project).earliest('id')
     return {'branch_count': project.branches.count(),
             'commit_count': branch.commit_count,
-            'contributor_count': project.contributors.count(),
+            'contributor_count': len(project.contributors.keys()),
             'requirement_count': project.requirements.count(),
             'tag_count': project.tags.count(),
             'user_is_admin': project.is_admin(request.user)}
