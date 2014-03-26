@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-md-4 center-block no-float">
+    <h3>Add a member to {{ organization.name }}</h3>
+    <form method="post" class="form" action="{{ organization.get_role_management_absolute_url }}">
+      {% csrf_token %}
+
+      {% bootstrap_form form %} {% buttons %}
+
+      <button type="submit" class="btn btn-primary">
+        {% bootstrap_icon "arrow-right" %} Next
+      </button>
+      {% endbuttons %}
+    </form>
+    <div id='descriptor' class="alert alert-warning">
+      <span class="glyphicon glyphicon-exclamation-sign"></span>
+      <span id="username"></span> will be able to:
+      <ul id="permissions">
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+var groups = {};
+{% for group in form.fields.group.queryset %}
+groups[{{ group.pk }}] = {{ group.permissions.as_json }};
+{% endfor %}
+
+$('#descriptor').hide();
+
+$('#id_role-user').keyup(function () {
+    if ($('#id_role-group').val()) {
+        $('#username').html(this.value);
+        $('#descriptor').show();
+    } else {
+        $('#descriptor').hide();
+    }
+
+    if (!this.value) {
+        $('#descriptor').hide();
+    }
+});
+
+$('#id_role-group').change(function () {
+  var $permissions = $('#permissions').html('');
+  var pk = this.value;
+
+  for (var permission in groups[pk]) {
+    $permissions.append($('<li>' + permission + '</li>'));
+  }
+
+  $('#id_role-user').keyup();
+});
+
+$('#id_role-group').change();
+$('#id_role-user').keyup();
+</script>
+{% endblock %}

@@ -9,7 +9,9 @@ from llab.utils.enumeration import make_bitwise_enumeration, BitwiseSet
 from llab.utils.request import notify_users
 
 
-Notification = make_bitwise_enumeration('Notification', ('email', 'web'))
+Notification = make_bitwise_enumeration(
+    'Notification', (('email', 'Receive email notifications'),
+                     ('web', 'Receive web notifications')))
 
 
 # This is the key manager--or the gate-keeper

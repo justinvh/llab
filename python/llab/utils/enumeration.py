@@ -1,19 +1,28 @@
+import json
+
+from collections import OrderedDict
+
+from django.utils.safestring import mark_safe
+
+
 class PermissionBase(object):
     @classmethod
     def permission_as_int(cls, exclude=[]):
         permission_bitwise = 0
-        for _, permission in self.choices.iteritems():
-            if permission in exclude:
+        for name, permission in cls.choices:
+            if name in exclude:
                 continue
             permission_bitwise |= permission
         return permission_bitwise
 
 
 def make_bitwise_enumeration(name, values):
-    choices = [(p, 1 << i) for i, p in enumerate(values)]
+    choices = [(p, 1 << i) for i, (p, _) in enumerate(values)]
+    long_choices = [(1 << i, l) for i, (_, l) in enumerate(values)]
     reverse = [(i, p) for p, i in choices]
     params = dict(choices)
     params['choices'] = choices
+    params['long_choices'] = dict(long_choices)
     params['value_key'] = dict(reverse)
     return type(name, (PermissionBase,), params)
 
@@ -36,6 +45,11 @@ class BitwiseSet(set):
         field = getattr(self.instance, self.field)
         field &= ~value
         setattr(self.instance, self.field, field)
+
+    def as_json(self):
+        values = sorted((self.klass.long_choices[i], i) for i in self)
+        values = OrderedDict(values)
+        return mark_safe(json.dumps(values))
 
     def __repr__(self):
         values = dict((self.klass.value_key[i], i) for i in self)
