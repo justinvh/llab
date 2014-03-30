@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     'account.settings',
     'organization',
     'project',
+    'issue',
     'web',
 
     # Local builtins
